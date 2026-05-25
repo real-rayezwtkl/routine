@@ -200,6 +200,10 @@ select.fi option { background: var(--surface2); }
 .info-box { background: var(--accent-dim2); border: 1px solid rgba(200,255,110,0.15); border-radius: 10px; padding: 12px; font-size: 12px; font-family: var(--font-mono); color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
 .info-box strong { color: var(--accent); font-weight: 500; }
 </style>
+<script>
+  if (location.pathname.endsWith('/') && location.pathname !== '/')
+    history.replaceState(null, '', location.pathname.slice(0, -1) + location.search);
+</script>
 </head>
 <body>
 
