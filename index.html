@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Routine">
+<title>Routine</title>
+<script>
+  if (location.pathname.endsWith('/') && location.pathname !== '/')
+    history.replaceState(null, '', location.pathname.slice(0, -1) + location.search + location.hash);
+</script>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface2: #242424;
+  --border: #2e2e2e;
+  --accent: #c8ff6e;
+  --accent-dim: rgba(200,255,110,0.12);
+  --accent-dim2: rgba(200,255,110,0.06);
+  --text: #f0f0f0;
+  --muted: #666;
+  --muted2: #444;
+  --danger: #ff6b6b;
+  --blue: #6eb5ff;
+  --purple: #b06eff;
+  --amber: #ffb86e;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-display); }
+
+/* LAYOUT */
+.app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; position: relative; }
+.header { padding: calc(var(--safe-top) + 16px) 20px 12px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.app-title { font-size: 11px; font-family: var(--font-mono); color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+.header-actions { display: flex; gap: 8px; }
+.icon-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.15s; }
+.icon-btn:hover, .icon-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim2); }
+.date-line { margin-top: 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); line-height: 1.1; }
+.date-sub { font-size: 12px; font-family: var(--font-mono); color: var(--muted); margin-top: 4px; }
+.progress-strip { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
+.progress-bar-wrap { flex: 1; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+.progress-text { font-size: 11px; font-family: var(--font-mono); color: var(--muted); white-space: nowrap; }
+.streak-pill { font-size: 11px; font-family: var(--font-mono); color: var(--accent); background: var(--accent-dim); border-radius: 99px; padding: 2px 10px; white-space: nowrap; }
+
+/* CONTENT */
+.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 20px calc(var(--safe-bottom) + 80px); }
+.content::-webkit-scrollbar { display: none; }
+
+/* NAV */
+.nav { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px 20px calc(var(--safe-bottom) + 10px); display: flex; gap: 6px; background: linear-gradient(to top, var(--bg) 60%, transparent); border-top: 1px solid var(--border); }
+.nav-btn { flex: 1; padding: 10px 6px; border-radius: 10px; border: 1px solid transparent; background: transparent; color: var(--muted); font-family: var(--font-display); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all 0.15s; letter-spacing: 0.03em; }
+.nav-btn svg { width: 20px; height: 20px; stroke-width: 1.8; }
+.nav-btn.active { color: var(--accent); background: var(--accent-dim); border-color: rgba(200,255,110,0.2); }
+.nav-btn:not(.active):hover { color: var(--text); background: var(--surface); }
+
+/* SECTION LABELS */
+.section-label { font-size: 10px; font-family: var(--font-mono); color: var(--muted2); letter-spacing: 0.1em; text-transform: uppercase; margin: 20px 0 8px; }
+.section-label:first-child { margin-top: 0; }
+
+/* HABIT CARDS */
+.habit-card { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
+.habit-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; transition: background 0.2s; border-radius: 3px 0 0 3px; }
+.habit-card.morning::before { background: var(--amber); }
+.habit-card.flexible::before { background: var(--blue); }
+.habit-card.night::before { background: var(--purple); }
+.habit-card.optional::before { background: var(--muted2); }
+.habit-card:active { transform: scale(0.98); }
+.habit-card.done { background: var(--accent-dim2); border-color: rgba(200,255,110,0.15); }
+.habit-card.done .h-name { color: var(--muted); text-decoration: line-through; }
+.check { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.habit-card.done .check { background: var(--accent); border-color: var(--accent); }
+.check svg { width: 13px; height: 13px; stroke: var(--bg); opacity: 0; transition: opacity 0.15s; stroke-width: 3; }
+.habit-card.done .check svg { opacity: 1; }
+.h-body { flex: 1; min-width: 0; }
+.h-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-meta { font-size: 11px; font-family: var(--font-mono); color: var(--muted); margin-top: 2px; }
+.h-tag { font-size: 10px; font-family: var(--font-mono); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.tag-morning { background: rgba(255,184,110,0.12); color: var(--amber); }
+.tag-flexible { background: rgba(110,181,255,0.12); color: var(--blue); }
+.tag-night { background: rgba(176,110,255,0.12); color: var(--purple); }
+.tag-optional { background: var(--surface2); color: var(--muted); }
+.del-btn { background: none; border: none; color: var(--muted2); cursor: pointer; padding: 4px; border-radius: 6px; font-size: 16px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+.habit-card:hover .del-btn { opacity: 1; }
+.del-btn:hover { color: var(--danger); }
+
+/* ADD HABIT */
+.add-habit-form { background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; padding: 14px; margin-top: 16px; }
+.add-habit-form.hidden { display: none; }
+.form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.form-row:last-child { margin-bottom: 0; }
+.fi { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-family: var(--font-display); font-size: 13px; color: var(--text); outline: none; }
+.fi:focus { border-color: var(--accent); }
+.fi::placeholder { color: var(--muted); }
+select.fi option { background: var(--surface2); }
+.add-submit { background: var(--accent); color: var(--bg); border: none; border-radius: 8px; padding: 9px 18px; font-family: var(--font-display); font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+.add-submit:hover { opacity: 0.85; }
+.add-trigger { width: 100%; margin-top: 12px; background: transparent; border: 1px dashed var(--border); color: var(--muted); border-radius: 10px; padding: 10px; font-family: var(--font-display); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
+.add-trigger:hover { border-color: var(--accent); color: var(--accent); }
+
+/* NOTES */
+.notes-wrap { display: flex; flex-direction: column; gap: 12px; }
+.note-date-group { font-size: 10px; font-family: var(--font-mono); color: var(--muted2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; margin-top: 16px; }
+.note-date-group:first-child { margin-top: 0; }
+.note-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; position: relative; }
+.note-card-text { font-size: 14px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.note-card-time { font-size: 10px; font-family: var(--font-mono); color: var(--muted); margin-top: 8px; }
+.note-del { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--muted2); cursor: pointer; font-size: 14px; opacity: 0; transition: opacity 0.15s; }
+.note-card:hover .note-del { opacity: 1; }
+.note-del:hover { color: var(--danger); }
+.note-composer { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 16px; }
+.note-input { width: 100%; background: transparent; border: none; font-family: var(--font-display); font-size: 14px; color: var(--text); resize: none; outline: none; min-height: 70px; line-height: 1.6; }
+.note-input::placeholder { color: var(--muted); }
+.note-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.note-tag-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); outline: none; }
+.note-save { background: var(--accent); color: var(--bg); border: none; border-radius: 8px; padding: 7px 16px; font-family: var(--font-display); font-size: 12px; font-weight: 700; cursor: pointer; }
+.note-tag-pill { font-size: 10px; font-family: var(--font-mono); padding: 2px 8px; border-radius: 6px; display: inline-block; margin-bottom: 6px; }
+.ntag-study { background: rgba(110,181,255,0.12); color: var(--blue); }
+.ntag-personal { background: rgba(176,110,255,0.12); color: var(--purple); }
+.ntag-idea { background: rgba(200,255,110,0.12); color: var(--accent); }
+.ntag-general { background: var(--surface2); color: var(--muted); }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; font-family: var(--font-mono); }
+
+/* CALENDAR */
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.cal-month { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+.cal-nav { display: flex; gap: 6px; }
+.cal-nav-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 20px; }
+.cal-dow { font-size: 10px; font-family: var(--font-mono); color: var(--muted); text-align: center; padding: 4px 0; letter-spacing: 0.05em; }
+.cal-day { aspect-ratio: 1; border-radius: 8px; border: 1px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; transition: all 0.15s; position: relative; }
+.cal-day-num { font-size: 13px; font-weight: 600; line-height: 1; }
+.cal-day.other-month .cal-day-num { color: var(--muted2); }
+.cal-day.today { border-color: var(--accent); background: var(--accent-dim2); }
+.cal-day.today .cal-day-num { color: var(--accent); }
+.cal-day.selected { background: var(--accent); }
+.cal-day.selected .cal-day-num { color: var(--bg); }
+.cal-day:not(.other-month):hover:not(.selected) { background: var(--surface); border-color: var(--border); }
+.cal-dots { display: flex; gap: 2px; }
+.cal-dot { width: 4px; height: 4px; border-radius: 50%; }
+.dot-done { background: var(--accent); }
+.dot-partial { background: var(--amber); }
+.cal-day-detail { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.cal-day-detail-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+.cal-habit-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.cal-habit-row:last-child { border-bottom: none; }
+.cal-habit-check { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.cal-habit-check.done { background: var(--accent); border-color: var(--accent); }
+.cal-habit-check.done::after { content: ''; width: 6px; height: 6px; background: var(--bg); clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); }
+.cal-habit-name { font-size: 13px; color: var(--text); }
+.cal-habit-name.done { color: var(--muted); text-decoration: line-through; }
+
+/* SYNC */
+.sync-bar { padding: 8px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.sync-status { font-size: 11px; font-family: var(--font-mono); color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted2); flex-shrink: 0; }
+.sync-dot.synced { background: var(--accent); }
+.sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
+.sync-dot.error { background: var(--danger); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.sync-btn { font-size: 11px; font-family: var(--font-mono); background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; }
+.sync-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sync-btn.connect { color: var(--accent); border-color: rgba(200,255,110,0.3); background: var(--accent-dim2); }
+
+/* TOAST */
+.toast { position: fixed; top: calc(var(--safe-top) + 60px); left: 50%; transform: translateX(-50%) translateY(-10px); background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; font-size: 13px; font-family: var(--font-mono); color: var(--text); opacity: 0; transition: all 0.25s; z-index: 999; white-space: nowrap; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border-radius: 20px 20px 0 0; border: 1px solid var(--border); border-bottom: none; width: 100%; max-width: 480px; padding: 20px 20px calc(var(--safe-bottom) + 20px); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-handle { width: 36px; height: 4px; background: var(--muted2); border-radius: 99px; margin: 0 auto 20px; }
+.modal-title { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+.modal-fi { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; font-family: var(--font-display); font-size: 14px; color: var(--text); outline: none; margin-bottom: 10px; }
+.modal-fi:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 8px; margin-top: 6px; }
+.modal-cancel { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 10px; padding: 12px; font-family: var(--font-display); font-weight: 600; font-size: 14px; cursor: pointer; }
+.modal-submit { flex: 2; background: var(--accent); border: none; color: var(--bg); border-radius: 10px; padding: 12px; font-family: var(--font-display); font-weight: 700; font-size: 14px; cursor: pointer; }
+
+/* OAUTH SETUP */
+.setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+.setup-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.setup-card p { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; font-family: var(--font-mono); }
+.setup-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-family: var(--font-mono); font-size: 12px; color: var(--text); outline: none; margin-bottom: 8px; }
+.setup-input:focus { border-color: var(--accent); }
+.setup-btn { width: 100%; background: var(--accent); border: none; color: var(--bg); border-radius: 10px; padding: 12px; font-family: var(--font-display); font-weight: 700; font-size: 14px; cursor: pointer; }
+.setup-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--muted); margin-top: 6px; }
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+.info-box { background: var(--accent-dim2); border: 1px solid rgba(200,255,110,0.15); border-radius: 10px; padding: 12px; font-size: 12px; font-family: var(--font-mono); color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+.info-box strong { color: var(--accent); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="app-title">Routine</div>
+        <div class="date-line" id="date-line"></div>
+        <div class="date-sub" id="date-sub"></div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="reset-btn" title="Reset today" onclick="resetDay()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+        <button class="icon-btn" id="edit-btn" title="Edit habits" onclick="toggleEditMode()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="progress-strip">
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
+      <span class="progress-text" id="progress-text">0/0</span>
+      <span class="streak-pill" id="streak-pill">🔥 0</span>
+    </div>
+  </div>
+
+  <!-- SYNC BAR -->
+  <div class="sync-bar">
+    <div class="sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">Not connected</span>
+    </div>
+    <button class="sync-btn connect" id="sync-btn" onclick="handleSyncBtn()">Connect Drive</button>
+  </div>
+
+  <!-- CONTENT PANELS -->
+  <div class="content" id="panel-habits">
+    <div id="habits-list"></div>
+    <button class="add-trigger" onclick="openAddModal()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Add habit
+    </button>
+  </div>
+
+  <div class="content" id="panel-notes" style="display:none">
+    <div class="note-composer">
+      <textarea class="note-input" id="note-input" placeholder="Write a note, reflection, or idea…" rows="3"></textarea>
+      <div class="note-actions">
+        <select class="note-tag-select" id="note-tag">
+          <option value="general">General</option>
+          <option value="study">Study</option>
+          <option value="personal">Personal</option>
+          <option value="idea">Idea</option>
+        </select>
+        <button class="note-save" onclick="saveNote()">Save note</button>
+      </div>
+    </div>
+    <div id="notes-list"></div>
+  </div>
+
+  <div class="content" id="panel-calendar" style="display:none">
+    <div class="cal-header">
+      <div class="cal-month" id="cal-month-label"></div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+        <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div id="cal-day-detail"></div>
+  </div>
+
+  <div class="content" id="panel-sync" style="display:none">
+    <div id="sync-setup-content"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="nav">
+    <button class="nav-btn active" data-panel="habits" onclick="switchPanel('habits')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      Today
+    </button>
+    <button class="nav-btn" data-panel="notes" onclick="switchPanel('notes')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      Notes
+    </button>
+    <button class="nav-btn" data-panel="calendar" onclick="switchPanel('calendar')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Calendar
+    </button>
+    <button class="nav-btn" data-panel="sync" onclick="switchPanel('sync')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+      Sync
+    </button>
+  </nav>
+</div>
+
+<!-- ADD HABIT MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add habit</div>
+    <input class="modal-fi" id="new-habit-name" placeholder="Habit name" />
+    <input class="modal-fi" id="new-habit-meta" placeholder="Details (e.g. 30 min · flexible)" />
+    <select class="modal-fi" id="new-habit-time">
+      <option value="morning">Morning</option>
+      <option value="flexible" selected>Flexible</option>
+      <option value="night">Night</option>
+      <option value="optional">Optional</option>
+    </select>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeAddModal()">Cancel</button>
+      <button class="modal-submit" onclick="addHabit()">Add habit</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────
+const DEFAULT_HABITS = [
+  { id:'wake',    name:'Wake up at 6 am',         meta:'Start strong',                       time:'morning'  },
+  { id:'drive',   name:'Driving class',            meta:'Temporary — check schedule',         time:'morning'  },
+  { id:'german',  name:'Study German',             meta:'45–60 min · flexible timing',        time:'flexible' },
+  { id:'math1',   name:'Study Math (session 1)',   meta:'40 min · flexible timing',           time:'flexible' },
+  { id:'finance', name:'Financial theory',         meta:'30 min · flexible timing',           time:'flexible' },
+  { id:'dsa',     name:'Study DSA',                meta:'1–1.5 hrs · flexible timing',        time:'flexible' },
+  { id:'dsa2',    name:'Extra DSA session',        meta:'Deep dive when in flow',             time:'optional' },
+  { id:'math2',   name:'Study Math (session 2)',   meta:'40 min · flexible timing',           time:'flexible' },
+  { id:'intern',  name:'Internship hunting',       meta:'Browse listings, reach out',         time:'flexible' },
+  { id:'resume',  name:'Resume & applications',    meta:'Refine, tailor, apply',              time:'flexible' },
+  { id:'workout', name:'Workout',                  meta:'Anytime — move your body',           time:'optional' },
+  { id:'spanish', name:'Study Spanish',            meta:'15–30 min · night',                  time:'night'    },
+];
+
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function loadLS(k, def) { try { return JSON.parse(localStorage.getItem(k) ?? 'null') ?? def; } catch { return def; } }
+function saveLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+let habits   = loadLS('rt_habits', DEFAULT_HABITS);
+let checks   = loadLS('rt_checks', {});   // { 'YYYY-MM-DD': { id: bool } }
+let notes    = loadLS('rt_notes', []);
+let streak   = loadLS('rt_streak', { count: 0, last: '' });
+let editMode = false;
+let calDate  = new Date();
+let selectedCalDay = todayStr();
+let gdrive   = loadLS('rt_gdrive', { token: null, fileId: null, connected: false });
+
+// ─── SAVE ALL ────────────────────────────────────────────────────────
+function persist() {
+  saveLS('rt_habits', habits);
+  saveLS('rt_checks', checks);
+  saveLS('rt_notes', notes);
+  saveLS('rt_streak', streak);
+  saveLS('rt_gdrive', gdrive);
+}
+
+// ─── HEADER ──────────────────────────────────────────────────────────
+function renderHeader() {
+  const d = new Date();
+  document.getElementById('date-line').textContent =
+    d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
+  document.getElementById('date-sub').textContent =
+    d.toLocaleDateString('en-IN', { year:'numeric' });
+  updateProgress();
+}
+
+function updateProgress() {
+  const today = todayStr();
+  const todayChecks = checks[today] || {};
+  const required = habits.filter(h => h.time !== 'optional');
+  const done = required.filter(h => todayChecks[h.id]).length;
+  const pct = required.length ? Math.round((done / required.length) * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${done}/${required.length}`;
+  updateStreak(done === required.length && required.length > 0);
+  document.getElementById('streak-pill').textContent = `🔥 ${streak.count}`;
+}
+
+function updateStreak(allDone) {
+  const today = todayStr();
+  if (allDone && streak.last !== today) {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+    streak.count = streak.last === yesterday ? streak.count + 1 : 1;
+    streak.last = today;
+    saveLS('rt_streak', streak);
+  }
+}
+
+// ─── HABITS PANEL ────────────────────────────────────────────────────
+const SECTIONS = [
+  { key:'morning',  label:'Morning' },
+  { key:'flexible', label:'Study & work' },
+  { key:'night',    label:'Night' },
+  { key:'optional', label:'Optional' },
+];
+
+function renderHabits() {
+  const today = todayStr();
+  const todayChecks = checks[today] || {};
+  const list = document.getElementById('habits-list');
+  list.innerHTML = '';
+
+  SECTIONS.forEach(sec => {
+    const items = habits.filter(h => h.time === sec.key);
+    if (!items.length) return;
+    const lbl = document.createElement('div');
+    lbl.className = 'section-label';
+    lbl.textContent = sec.label;
+    list.appendChild(lbl);
+    items.forEach(h => {
+      const card = document.createElement('div');
+      card.className = `habit-card ${h.time}${todayChecks[h.id] ? ' done' : ''}`;
+      card.innerHTML = `
+        <div class="check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div class="h-body">
+          <div class="h-name">${h.name}</div>
+          <div class="h-meta">${h.meta}</div>
+        </div>
+        <span class="h-tag tag-${h.time}">${sec.key === 'optional' ? 'optional' : sec.key}</span>
+        ${editMode ? `<button class="del-btn" onclick="deleteHabit('${h.id}',event)">✕</button>` : ''}
+      `;
+      if (!editMode) card.onclick = () => toggleHabit(h.id);
+      list.appendChild(card);
+    });
+  });
+}
+
+function toggleHabit(id) {
+  const today = todayStr();
+  if (!checks[today]) checks[today] = {};
+  checks[today][id] = !checks[today][id];
+  persist();
+  renderHabits();
+  updateProgress();
+  scheduleDriveSync();
+}
+
+function deleteHabit(id, e) {
+  e.stopPropagation();
+  habits = habits.filter(h => h.id !== id);
+  persist();
+  renderHabits();
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  document.getElementById('edit-btn').classList.toggle('active', editMode);
+  renderHabits();
+}
+
+function resetDay() {
+  const today = todayStr();
+  checks[today] = {};
+  persist();
+  renderHabits();
+  updateProgress();
+  showToast('Day reset');
+}
+
+// ─── ADD HABIT MODAL ─────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('add-modal').classList.add('open');
+  document.getElementById('new-habit-name').focus();
+}
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('open');
+  document.getElementById('new-habit-name').value = '';
+  document.getElementById('new-habit-meta').value = '';
+}
+function addHabit() {
+  const name = document.getElementById('new-habit-name').value.trim();
+  if (!name) { showToast('Enter a habit name'); return; }
+  const meta = document.getElementById('new-habit-meta').value.trim();
+  const time = document.getElementById('new-habit-time').value;
+  habits.push({ id: 'h_' + Date.now(), name, meta: meta || '', time });
+  persist();
+  renderHabits();
+  closeAddModal();
+  showToast('Habit added');
+  scheduleDriveSync();
+}
+document.getElementById('add-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('add-modal')) closeAddModal();
+});
+
+// ─── NOTES PANEL ─────────────────────────────────────────────────────
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!notes.length) { list.innerHTML = '<div class="empty-state">No notes yet.<br>Write your first one above.</div>'; return; }
+  const byDate = {};
+  [...notes].reverse().forEach(n => {
+    const d = n.ts.slice(0,10);
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(n);
+  });
+  list.innerHTML = '';
+  Object.entries(byDate).forEach(([date, nts]) => {
+    const lbl = document.createElement('div');
+    lbl.className = 'note-date-group';
+    lbl.textContent = new Date(date + 'T12:00:00').toLocaleDateString('en-IN', { weekday:'long', month:'long', day:'numeric' });
+    list.appendChild(lbl);
+    nts.forEach(n => {
+      const card = document.createElement('div');
+      card.className = 'note-card';
+      card.innerHTML = `
+        <div class="note-tag-pill ntag-${n.tag}">${n.tag}</div>
+        <div class="note-card-text">${escHtml(n.text)}</div>
+        <div class="note-card-time">${new Date(n.ts).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' })}</div>
+        <button class="note-del" onclick="deleteNote('${n.id}')">✕</button>
+      `;
+      list.appendChild(card);
+    });
+  });
+}
+function saveNote() {
+  const text = document.getElementById('note-input').value.trim();
+  if (!text) return;
+  const tag = document.getElementById('note-tag').value;
+  notes.push({ id: 'n_' + Date.now(), text, tag, ts: new Date().toISOString() });
+  persist();
+  document.getElementById('note-input').value = '';
+  renderNotes();
+  showToast('Note saved');
+  scheduleDriveSync();
+}
+function deleteNote(id) {
+  notes = notes.filter(n => n.id !== id);
+  persist();
+  renderNotes();
+}
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ─── CALENDAR PANEL ──────────────────────────────────────────────────
+function renderCalendar() {
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  document.getElementById('cal-month-label').textContent =
+    calDate.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '<div class="cal-dow">Su</div><div class="cal-dow">Mo</div><div class="cal-dow">Tu</div><div class="cal-dow">We</div><div class="cal-dow">Th</div><div class="cal-dow">Fr</div><div class="cal-dow">Sa</div>';
+
+  const first = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const prevDays = new Date(y, m, 0).getDate();
+  const today = todayStr();
+
+  for (let i = 0; i < first; i++) {
+    const d = prevDays - first + 1 + i;
+    const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    grid.appendChild(makeCalDay(d, dateStr, true, today));
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    grid.appendChild(makeCalDay(d, dateStr, false, today));
+  }
+  const remaining = 42 - first - daysInMonth;
+  for (let d = 1; d <= remaining; d++) {
+    const dateStr = `${y}-${String(m+2).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    grid.appendChild(makeCalDay(d, dateStr, true, today));
+  }
+  renderCalDayDetail();
+}
+
+function makeCalDay(num, dateStr, otherMonth, today) {
+  const el = document.createElement('div');
+  el.className = 'cal-day' + (otherMonth ? ' other-month' : '') + (dateStr === today ? ' today' : '') + (dateStr === selectedCalDay ? ' selected' : '');
+  const dayChecks = checks[dateStr] || {};
+  const required = habits.filter(h => h.time !== 'optional');
+  const done = required.filter(h => dayChecks[h.id]).length;
+  let dots = '';
+  if (done === required.length && done > 0) dots = '<div class="cal-dots"><div class="cal-dot dot-done"></div></div>';
+  else if (done > 0) dots = '<div class="cal-dots"><div class="cal-dot dot-partial"></div></div>';
+  el.innerHTML = `<div class="cal-day-num">${num}</div>${dots}`;
+  el.onclick = () => { selectedCalDay = dateStr; renderCalendar(); };
+  return el;
+}
+
+function renderCalDayDetail() {
+  const detail = document.getElementById('cal-day-detail');
+  const dayChecks = checks[selectedCalDay] || {};
+  const d = new Date(selectedCalDay + 'T12:00:00');
+  const label = d.toLocaleDateString('en-IN', { weekday:'long', month:'long', day:'numeric' });
+  if (!habits.length) { detail.innerHTML = ''; return; }
+  detail.innerHTML = `
+    <div class="cal-day-detail">
+      <div class="cal-day-detail-title">${label}</div>
+      ${habits.map(h => `
+        <div class="cal-habit-row">
+          <div class="cal-habit-check ${dayChecks[h.id] ? 'done' : ''}"></div>
+          <div class="cal-habit-name ${dayChecks[h.id] ? 'done' : ''}">${h.name}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function calNav(dir) {
+  calDate.setMonth(calDate.getMonth() + dir);
+  renderCalendar();
+}
+
+// ─── SYNC PANEL ──────────────────────────────────────────────────────
+function renderSyncPanel() {
+  const el = document.getElementById('sync-setup-content');
+  if (gdrive.connected && gdrive.token) {
+    el.innerHTML = `
+      <div class="setup-card">
+        <h3>✓ Google Drive connected</h3>
+        <p>Your data syncs automatically to a file called <strong>routine-data.json</strong> in your Google Drive.</p>
+        <div class="info-box">
+          <strong>How it works:</strong><br>
+          Every time you check off a habit, add a note, or make any change, the app automatically saves your data to Google Drive within 3 seconds. When you open the app on another device, it pulls the latest data from Drive.
+        </div>
+        <button class="setup-btn" onclick="syncNow()">Sync now</button>
+        <button class="setup-btn secondary" onclick="disconnectDrive()">Disconnect Drive</button>
+      </div>
+      <div class="setup-card">
+        <h3>Install on other devices</h3>
+        <p>Open this HTML file in any browser, connect the same Google account, and your data will sync automatically.</p>
+        <p style="margin-top:8px">On mobile: tap <strong>Share → Add to Home Screen</strong> to install as a native-feeling app.</p>
+      </div>
+    `;
+  } else {
+    el.innerHTML = `
+      <div class="setup-card">
+        <h3>Connect Google Drive</h3>
+        <p>To sync across devices, you need a Google OAuth Client ID. Here's how to get one in 2 minutes:</p>
+        <div class="info-box">
+          <strong>1.</strong> Go to <strong>console.cloud.google.com</strong><br>
+          <strong>2.</strong> Create a project → APIs & Services → Enable "Google Drive API"<br>
+          <strong>3.</strong> Credentials → Create OAuth 2.0 Client ID → Web Application<br>
+          <strong>4.</strong> Add your file's URL to "Authorized JavaScript origins"<br>
+          <strong>5.</strong> Copy the Client ID and paste below
+        </div>
+        <input class="setup-input" id="client-id-input" placeholder="your-client-id.apps.googleusercontent.com" value="${loadLS('rt_client_id','')||''}">
+        <button class="setup-btn" onclick="connectDrive()">Connect Google Drive</button>
+      </div>
+      <div class="divider"></div>
+      <div class="setup-card">
+        <h3>No setup? Use local mode</h3>
+        <p>Your data is saved locally in this browser. Export a backup anytime.</p>
+        <button class="setup-btn secondary" onclick="exportData()">Export data as JSON</button>
+        <button class="setup-btn secondary" onclick="importData()" style="margin-top:6px">Import from JSON</button>
+      </div>
+    `;
+  }
+}
+
+function connectDrive() {
+  const clientId = document.getElementById('client-id-input').value.trim();
+  if (!clientId) { showToast('Enter your Client ID first'); return; }
+  saveLS('rt_client_id', clientId);
+  initGoogleAuth(clientId);
+}
+
+function initGoogleAuth(clientId) {
+  const script = document.createElement('script');
+  script.src = 'https://accounts.google.com/gsi/client';
+  script.onload = () => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: async (resp) => {
+        if (resp.error) { showToast('Auth failed: ' + resp.error); return; }
+        gdrive.token = resp.access_token;
+        gdrive.connected = true;
+        persist();
+        updateSyncUI();
+        renderSyncPanel();
+        showToast('Drive connected!');
+        await syncToDrive();
+      }
+    });
+    client.requestAccessToken();
+  };
+  document.head.appendChild(script);
+}
+
+function disconnectDrive() {
+  gdrive = { token: null, fileId: null, connected: false };
+  persist();
+  updateSyncUI();
+  renderSyncPanel();
+  showToast('Disconnected');
+}
+
+// ─── GOOGLE DRIVE SYNC ───────────────────────────────────────────────
+let syncTimer = null;
+function scheduleDriveSync() {
+  if (!gdrive.connected || !gdrive.token) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToDrive, 3000);
+}
+
+async function syncToDrive() {
+  if (!gdrive.token) return;
+  setSyncStatus('syncing', 'Syncing…');
+  const data = JSON.stringify({ habits, checks, notes, streak, version: 1 });
+  try {
+    if (gdrive.fileId) {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gdrive.fileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${gdrive.token}`, 'Content-Type': 'application/json' },
+        body: data
+      });
+    } else {
+      const meta = await fetch('https://www.googleapis.com/drive/v3/files?q=name%3D%22routine-data.json%22&spaces=drive', {
+        headers: { Authorization: `Bearer ${gdrive.token}` }
+      }).then(r => r.json());
+      if (meta.files && meta.files.length) {
+        gdrive.fileId = meta.files[0].id;
+        const existing = await fetch(`https://www.googleapis.com/drive/v3/files/${gdrive.fileId}?alt=media`, {
+          headers: { Authorization: `Bearer ${gdrive.token}` }
+        }).then(r => r.json()).catch(() => null);
+        if (existing && existing.version === 1) {
+          habits = existing.habits || habits;
+          checks = existing.checks || checks;
+          notes  = existing.notes || notes;
+          streak = existing.streak || streak;
+          persist();
+          renderHabits(); renderNotes(); updateProgress();
+        }
+        await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gdrive.fileId}?uploadType=media`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${gdrive.token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ habits, checks, notes, streak, version: 1 })
+        });
+      } else {
+        const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${gdrive.token}`, 'Content-Type': 'multipart/related; boundary=foo' },
+          body: `--foo\r\nContent-Type: application/json\r\n\r\n${JSON.stringify({ name:'routine-data.json', mimeType:'application/json' })}\r\n--foo\r\nContent-Type: application/json\r\n\r\n${data}\r\n--foo--`
+        }).then(r => r.json());
+        gdrive.fileId = res.id;
+      }
+    }
+    saveLS('rt_gdrive', gdrive);
+    setSyncStatus('synced', 'Synced ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }));
+  } catch(e) {
+    setSyncStatus('error', 'Sync failed');
+  }
+}
+
+async function syncNow() {
+  showToast('Syncing…');
+  await syncToDrive();
+}
+
+function setSyncStatus(state, label) {
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot ' + state;
+  document.getElementById('sync-label').textContent = label;
+}
+
+function updateSyncUI() {
+  const btn = document.getElementById('sync-btn');
+  if (gdrive.connected) {
+    setSyncStatus('synced', 'Drive connected');
+    btn.textContent = 'Sync now';
+    btn.classList.remove('connect');
+    btn.onclick = syncNow;
+  } else {
+    setSyncStatus('', 'Not connected');
+    btn.textContent = 'Connect Drive';
+    btn.classList.add('connect');
+    btn.onclick = () => switchPanel('sync');
+  }
+}
+
+function handleSyncBtn() {
+  if (gdrive.connected) syncNow();
+  else switchPanel('sync');
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────
+function exportData() {
+  const data = JSON.stringify({ habits, checks, notes, streak, version: 1 }, null, 2);
+  const a = document.createElement('a');
+  a.href = 'data:application/json,' + encodeURIComponent(data);
+  a.download = 'routine-backup-' + todayStr() + '.json';
+  a.click();
+  showToast('Exported!');
+}
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const d = JSON.parse(ev.target.result);
+        if (d.habits) habits = d.habits;
+        if (d.checks) checks = d.checks;
+        if (d.notes)  notes  = d.notes;
+        if (d.streak) streak = d.streak;
+        persist();
+        renderAll();
+        showToast('Imported!');
+      } catch { showToast('Invalid file'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ─── PANEL SWITCHING ─────────────────────────────────────────────────
+function switchPanel(name) {
+  ['habits','notes','calendar','sync'].forEach(p => {
+    document.getElementById('panel-' + p).style.display = p === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.panel === name);
+  });
+  if (name === 'notes') renderNotes();
+  if (name === 'calendar') renderCalendar();
+  if (name === 'sync') renderSyncPanel();
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── RENDER ALL ──────────────────────────────────────────────────────
+function renderAll() {
+  renderHeader();
+  renderHabits();
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────
+renderAll();
+updateSyncUI();
+
+// Service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// Auto-refresh header date at midnight
+const now = new Date();
+const msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1) - now;
+setTimeout(() => { renderAll(); setInterval(renderAll, 86400000); }, msToMidnight);
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('add-modal').classList.contains('open')) addHabit();
+  if (e.key === 'Escape') closeAddModal();
+});
+
+// Auto-reconnect Drive on load if we have a saved client ID
+const savedClientId = loadLS('rt_client_id', '');
+if (savedClientId && gdrive.connected) {
+  setTimeout(() => initGoogleAuth(savedClientId), 1000);
+}
+</script>
+</body>
+</html>
