@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0f0f0f">
+<meta name="theme-color" content="#0a0e1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Routine">
@@ -14,667 +14,898 @@
 </script>
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0f0f0f;
-  --surface: #1a1a1a;
-  --surface2: #242424;
-  --border: #2e2e2e;
-  --accent: #c8ff6e;
-  --accent-dim: rgba(200,255,110,0.12);
-  --accent-dim2: rgba(200,255,110,0.06);
-  --text: #f0f0f0;
-  --muted: #666;
-  --muted2: #444;
-  --danger: #ff6b6b;
-  --blue: #6eb5ff;
-  --purple: #b06eff;
-  --amber: #ffb86e;
-  --font-display: 'Syne', sans-serif;
-  --font-mono: 'DM Mono', monospace;
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --bg:        #0a0e1a;
+  --sidebar:   #0d1120;
+  --surface:   #131929;
+  --surface2:  #1a2236;
+  --surface3:  #1f2a40;
+  --border:    #1e2d45;
+  --border2:   #243352;
+  --accent:    #4a7cf7;
+  --accent-h:  #3d6de0;
+  --accent-dim:#4a7cf720;
+  --red:       #e05252;
+  --amber:     #f0a732;
+  --green:     #3ec97a;
+  --purple:    #9b6ef7;
+  --text:      #e8edf5;
+  --text2:     #8a9bb5;
+  --text3:     #4a5a78;
+  --font:      'Inter', sans-serif;
+  --safe-top:  env(safe-area-inset-top, 0px);
+  --safe-bot:  env(safe-area-inset-bottom, 0px);
+  --sidebar-w: 240px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-display); }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
 
-/* LAYOUT */
-.app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; position: relative; }
-.header { padding: calc(var(--safe-top) + 16px) 20px 12px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
-.header-top { display: flex; justify-content: space-between; align-items: flex-start; }
-.app-title { font-size: 11px; font-family: var(--font-mono); color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
-.header-actions { display: flex; gap: 8px; }
-.icon-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.15s; }
-.icon-btn:hover, .icon-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim2); }
-.date-line { margin-top: 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); line-height: 1.1; }
-.date-sub { font-size: 12px; font-family: var(--font-mono); color: var(--muted); margin-top: 4px; }
-.progress-strip { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
-.progress-bar-wrap { flex: 1; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
-.progress-text { font-size: 11px; font-family: var(--font-mono); color: var(--muted); white-space: nowrap; }
-.streak-pill { font-size: 11px; font-family: var(--font-mono); color: var(--accent); background: var(--accent-dim); border-radius: 99px; padding: 2px 10px; white-space: nowrap; }
+/* ── LAYOUT ── */
+.app { display: flex; height: 100dvh; }
+.sidebar { width: var(--sidebar-w); background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; padding-top: var(--safe-top); overflow-y: auto; }
+.sidebar::-webkit-scrollbar { display: none; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
 
-/* CONTENT */
-.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 20px calc(var(--safe-bottom) + 80px); }
-.content::-webkit-scrollbar { display: none; }
-
-/* NAV */
-.nav { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px 20px calc(var(--safe-bottom) + 10px); display: flex; gap: 6px; background: linear-gradient(to top, var(--bg) 60%, transparent); border-top: 1px solid var(--border); }
-.nav-btn { flex: 1; padding: 10px 6px; border-radius: 10px; border: 1px solid transparent; background: transparent; color: var(--muted); font-family: var(--font-display); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all 0.15s; letter-spacing: 0.03em; }
-.nav-btn svg { width: 20px; height: 20px; stroke-width: 1.8; }
-.nav-btn.active { color: var(--accent); background: var(--accent-dim); border-color: rgba(200,255,110,0.2); }
-.nav-btn:not(.active):hover { color: var(--text); background: var(--surface); }
-
-/* SECTION LABELS */
-.section-label { font-size: 10px; font-family: var(--font-mono); color: var(--muted2); letter-spacing: 0.1em; text-transform: uppercase; margin: 20px 0 8px; }
-.section-label:first-child { margin-top: 0; }
-
-/* HABIT CARDS */
-.habit-card { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
-.habit-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; transition: background 0.2s; border-radius: 3px 0 0 3px; }
-.habit-card.morning::before { background: var(--amber); }
-.habit-card.flexible::before { background: var(--blue); }
-.habit-card.night::before { background: var(--purple); }
-.habit-card.optional::before { background: var(--muted2); }
-.habit-card:active { transform: scale(0.98); }
-.habit-card.done { background: var(--accent-dim2); border-color: rgba(200,255,110,0.15); }
-.habit-card.done .h-name { color: var(--muted); text-decoration: line-through; }
-.check { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-.habit-card.done .check { background: var(--accent); border-color: var(--accent); }
-.check svg { width: 13px; height: 13px; stroke: var(--bg); opacity: 0; transition: opacity 0.15s; stroke-width: 3; }
-.habit-card.done .check svg { opacity: 1; }
-.h-body { flex: 1; min-width: 0; }
-.h-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.h-meta { font-size: 11px; font-family: var(--font-mono); color: var(--muted); margin-top: 2px; }
-.h-tag { font-size: 10px; font-family: var(--font-mono); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
-.tag-morning { background: rgba(255,184,110,0.12); color: var(--amber); }
-.tag-flexible { background: rgba(110,181,255,0.12); color: var(--blue); }
-.tag-night { background: rgba(176,110,255,0.12); color: var(--purple); }
-.tag-optional { background: var(--surface2); color: var(--muted); }
-.del-btn { background: none; border: none; color: var(--muted2); cursor: pointer; padding: 4px; border-radius: 6px; font-size: 16px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
-.habit-card:hover .del-btn { opacity: 1; }
-.del-btn:hover { color: var(--danger); }
-
-/* ADD HABIT */
-.add-habit-form { background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; padding: 14px; margin-top: 16px; }
-.add-habit-form.hidden { display: none; }
-.form-row { display: flex; gap: 8px; margin-bottom: 8px; }
-.form-row:last-child { margin-bottom: 0; }
-.fi { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-family: var(--font-display); font-size: 13px; color: var(--text); outline: none; }
-.fi:focus { border-color: var(--accent); }
-.fi::placeholder { color: var(--muted); }
-select.fi option { background: var(--surface2); }
-.add-submit { background: var(--accent); color: var(--bg); border: none; border-radius: 8px; padding: 9px 18px; font-family: var(--font-display); font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
-.add-submit:hover { opacity: 0.85; }
-.add-trigger { width: 100%; margin-top: 12px; background: transparent; border: 1px dashed var(--border); color: var(--muted); border-radius: 10px; padding: 10px; font-family: var(--font-display); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
-.add-trigger:hover { border-color: var(--accent); color: var(--accent); }
-
-/* NOTES */
-.notes-wrap { display: flex; flex-direction: column; gap: 12px; }
-.note-date-group { font-size: 10px; font-family: var(--font-mono); color: var(--muted2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; margin-top: 16px; }
-.note-date-group:first-child { margin-top: 0; }
-.note-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; position: relative; }
-.note-card-text { font-size: 14px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word; }
-.note-card-time { font-size: 10px; font-family: var(--font-mono); color: var(--muted); margin-top: 8px; }
-.note-del { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--muted2); cursor: pointer; font-size: 14px; opacity: 0; transition: opacity 0.15s; }
-.note-card:hover .note-del { opacity: 1; }
-.note-del:hover { color: var(--danger); }
-.note-composer { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 16px; }
-.note-input { width: 100%; background: transparent; border: none; font-family: var(--font-display); font-size: 14px; color: var(--text); resize: none; outline: none; min-height: 70px; line-height: 1.6; }
-.note-input::placeholder { color: var(--muted); }
-.note-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-.note-tag-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); outline: none; }
-.note-save { background: var(--accent); color: var(--bg); border: none; border-radius: 8px; padding: 7px 16px; font-family: var(--font-display); font-size: 12px; font-weight: 700; cursor: pointer; }
-.note-tag-pill { font-size: 10px; font-family: var(--font-mono); padding: 2px 8px; border-radius: 6px; display: inline-block; margin-bottom: 6px; }
-.ntag-study { background: rgba(110,181,255,0.12); color: var(--blue); }
-.ntag-personal { background: rgba(176,110,255,0.12); color: var(--purple); }
-.ntag-idea { background: rgba(200,255,110,0.12); color: var(--accent); }
-.ntag-general { background: var(--surface2); color: var(--muted); }
-.empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; font-family: var(--font-mono); }
-
-/* CALENDAR */
-.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.cal-month { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
-.cal-nav { display: flex; gap: 6px; }
-.cal-nav-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 20px; }
-.cal-dow { font-size: 10px; font-family: var(--font-mono); color: var(--muted); text-align: center; padding: 4px 0; letter-spacing: 0.05em; }
-.cal-day { aspect-ratio: 1; border-radius: 8px; border: 1px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; transition: all 0.15s; position: relative; }
-.cal-day-num { font-size: 13px; font-weight: 600; line-height: 1; }
-.cal-day.other-month .cal-day-num { color: var(--muted2); }
-.cal-day.today { border-color: var(--accent); background: var(--accent-dim2); }
-.cal-day.today .cal-day-num { color: var(--accent); }
-.cal-day.selected { background: var(--accent); }
-.cal-day.selected .cal-day-num { color: var(--bg); }
-.cal-day:not(.other-month):hover:not(.selected) { background: var(--surface); border-color: var(--border); }
-.cal-dots { display: flex; gap: 2px; }
-.cal-dot { width: 4px; height: 4px; border-radius: 50%; }
-.dot-done { background: var(--accent); }
-.dot-partial { background: var(--amber); }
-.cal-day-detail { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
-.cal-day-detail-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
-.cal-habit-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
-.cal-habit-row:last-child { border-bottom: none; }
-.cal-habit-check { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-.cal-habit-check.done { background: var(--accent); border-color: var(--accent); }
-.cal-habit-check.done::after { content: ''; width: 6px; height: 6px; background: var(--bg); clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); }
-.cal-habit-name { font-size: 13px; color: var(--text); }
-.cal-habit-name.done { color: var(--muted); text-decoration: line-through; }
-
-/* SYNC */
-.sync-bar { padding: 8px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-.sync-status { font-size: 11px; font-family: var(--font-mono); color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted2); flex-shrink: 0; }
-.sync-dot.synced { background: var(--accent); }
+/* ── SIDEBAR ── */
+.sb-top { padding: 14px 12px 8px; }
+.sb-brand { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: default; margin-bottom: 4px; }
+.sb-brand-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0; }
+.sb-brand-name { font-weight: 600; font-size: 15px; color: var(--text); }
+.sb-add { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; cursor: pointer; color: var(--text2); transition: all 0.15s; margin: 4px 4px 0; font-size: 13px; border: none; background: none; width: calc(100% - 8px); text-align: left; }
+.sb-add:hover { background: var(--surface2); color: var(--accent); }
+.sb-add-icon { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.sb-divider { height: 1px; background: var(--border); margin: 8px 12px; }
+.sb-nav { padding: 0 8px; }
+.sb-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; cursor: pointer; color: var(--text2); font-size: 13px; transition: all 0.12s; user-select: none; border: none; background: none; width: 100%; text-align: left; }
+.sb-item:hover { background: var(--surface2); color: var(--text); }
+.sb-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 500; }
+.sb-item svg { width: 16px; height: 16px; flex-shrink: 0; stroke-width: 1.8; }
+.sb-item .badge { margin-left: auto; font-size: 11px; background: var(--surface3); color: var(--text2); border-radius: 10px; padding: 1px 6px; }
+.sb-item.active .badge { background: var(--accent-dim); color: var(--accent); }
+.sb-section { padding: 16px 8px 4px; }
+.sb-section-label { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 6px; }
+.sb-section-label:hover { background: var(--surface2); color: var(--text2); }
+.sb-project { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 6px; cursor: pointer; color: var(--text2); font-size: 13px; transition: all 0.12s; }
+.sb-project:hover { background: var(--surface2); color: var(--text); }
+.sb-project.active { background: var(--accent-dim); color: var(--accent); }
+.sb-project-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sb-project-count { margin-left: auto; font-size: 11px; color: var(--text3); }
+.sb-bottom { margin-top: auto; padding: 8px; border-top: 1px solid var(--border); }
+.sb-sync-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text2); transition: all 0.12s; border: none; background: none; width: 100%; text-align: left; }
+.sb-sync-row:hover { background: var(--surface2); }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.sync-dot.synced { background: var(--green); }
 .sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
-.sync-dot.error { background: var(--danger); }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.sync-btn { font-size: 11px; font-family: var(--font-mono); background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; }
-.sync-btn:hover { border-color: var(--accent); color: var(--accent); }
-.sync-btn.connect { color: var(--accent); border-color: rgba(200,255,110,0.3); background: var(--accent-dim2); }
+.sync-dot.error { background: var(--red); }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
 
-/* TOAST */
-.toast { position: fixed; top: calc(var(--safe-top) + 60px); left: 50%; transform: translateX(-50%) translateY(-10px); background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; font-size: 13px; font-family: var(--font-mono); color: var(--text); opacity: 0; transition: all 0.25s; z-index: 999; white-space: nowrap; pointer-events: none; }
+/* ── MOBILE NAV ── */
+.mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--sidebar); border-top: 1px solid var(--border); padding: 8px 0 calc(var(--safe-bot) + 4px); z-index: 50; }
+.mobile-nav-inner { display: flex; justify-content: space-around; }
+.mnav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 16px; background: none; border: none; color: var(--text2); font-size: 10px; font-family: var(--font); cursor: pointer; border-radius: 8px; transition: color 0.15s; }
+.mnav-btn svg { width: 20px; height: 20px; stroke-width: 1.8; }
+.mnav-btn.active { color: var(--accent); }
+
+/* ── MAIN HEADER ── */
+.main-header { padding: calc(var(--safe-top) + 20px) 28px 0; flex-shrink: 0; }
+.main-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.main-sub { font-size: 13px; color: var(--text2); }
+
+/* ── CONTENT ── */
+.panel { flex: 1; overflow-y: auto; padding: 20px 28px 40px; }
+.panel::-webkit-scrollbar { width: 4px; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+.panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ── HABITS ── */
+.section-hdr { display: flex; align-items: center; gap: 8px; margin: 20px 0 8px; cursor: pointer; }
+.section-hdr:first-child { margin-top: 0; }
+.section-hdr-label { font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: 0.04em; }
+.section-hdr-line { flex: 1; height: 1px; background: var(--border); }
+.section-hdr-count { font-size: 11px; color: var(--text3); }
+.habit-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; border-radius: 6px; position: relative; }
+.habit-row:hover { background: var(--surface); }
+.habit-row:hover .h-actions { opacity: 1; }
+.habit-check { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.habit-row.done .habit-check { background: var(--green); border-color: var(--green); }
+.habit-check svg { width: 10px; height: 10px; stroke: white; opacity: 0; stroke-width: 3; transition: opacity 0.15s; }
+.habit-row.done .habit-check svg { opacity: 1; }
+.habit-row.done .h-name { color: var(--text3); text-decoration: line-through; }
+.h-body { flex: 1; min-width: 0; }
+.h-name { font-size: 14px; color: var(--text); line-height: 1.4; }
+.h-meta-row { display: flex; align-items: center; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+.h-meta { font-size: 12px; color: var(--text3); }
+.h-deadline { font-size: 11px; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
+.h-deadline.overdue { background: rgba(224,82,82,0.15); color: var(--red); }
+.h-deadline.today { background: rgba(240,167,50,0.15); color: var(--amber); }
+.h-deadline.upcoming { background: rgba(74,124,247,0.12); color: var(--accent); }
+.h-tag { font-size: 11px; padding: 1px 6px; border-radius: 4px; }
+.tag-morning { background: rgba(240,167,50,0.12); color: var(--amber); }
+.tag-flexible { background: rgba(74,124,247,0.12); color: var(--accent); }
+.tag-night { background: rgba(155,110,247,0.12); color: var(--purple); }
+.tag-optional { background: var(--surface2); color: var(--text3); }
+.h-actions { display: flex; gap: 4px; margin-left: auto; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+.h-action-btn { background: none; border: none; color: var(--text3); cursor: pointer; padding: 2px 4px; border-radius: 4px; font-size: 13px; }
+.h-action-btn:hover { color: var(--text); background: var(--surface3); }
+.priority-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.p1 { background: var(--red); }
+.p2 { background: var(--amber); }
+.p3 { background: var(--accent); }
+.p4 { background: transparent; border: 1.5px solid var(--text3); }
+
+/* ── ADD TASK INLINE ── */
+.add-task-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; cursor: pointer; color: var(--text3); font-size: 13px; border-radius: 6px; transition: color 0.15s; margin-top: 4px; }
+.add-task-row:hover { color: var(--accent); }
+.add-task-row svg { width: 16px; height: 16px; stroke-width: 2; flex-shrink: 0; }
+
+/* ── TASK FORM ── */
+.task-form { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px; margin: 8px 0; }
+.task-form-name { width: 100%; background: transparent; border: none; font-family: var(--font); font-size: 14px; color: var(--text); outline: none; font-weight: 500; }
+.task-form-name::placeholder { color: var(--text3); }
+.task-form-desc { width: 100%; background: transparent; border: none; font-family: var(--font); font-size: 13px; color: var(--text2); outline: none; margin-top: 4px; resize: none; }
+.task-form-desc::placeholder { color: var(--text3); }
+.task-form-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.tf-btn { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--text2); font-family: var(--font); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.tf-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+.tf-btn svg { width: 13px; height: 13px; stroke-width: 2; }
+.tf-btn.accent { background: var(--accent); color: white; border-color: var(--accent); margin-left: auto; }
+.tf-btn.accent:hover { background: var(--accent-h); }
+.tf-btn.cancel { margin-left: 4px; }
+select.tf-sel { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); font-family: var(--font); font-size: 12px; cursor: pointer; outline: none; }
+select.tf-sel option { background: var(--surface2); }
+input[type=date].tf-date { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); font-family: var(--font); font-size: 12px; cursor: pointer; outline: none; color-scheme: dark; }
+
+/* ── CALENDAR ── */
+.cal-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.cal-month-label { font-size: 17px; font-weight: 700; }
+.cal-nav-btns { display: flex; gap: 6px; }
+.cal-nav-btn { background: var(--surface); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: all 0.15s; }
+.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin-bottom: 20px; }
+.cal-dow { font-size: 11px; color: var(--text3); text-align: center; padding: 6px 0; font-weight: 500; letter-spacing: 0.04em; }
+.cal-day { min-height: 72px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; gap: 2px; }
+.cal-day:hover { border-color: var(--accent); background: var(--surface2); }
+.cal-day.other-month { background: var(--bg); border-color: var(--border); opacity: 0.5; }
+.cal-day.today { border-color: var(--accent); }
+.cal-day.selected { background: var(--accent-dim); border-color: var(--accent); }
+.cal-day-num { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 2px; }
+.cal-day.today .cal-day-num { color: var(--accent); }
+.cal-day.selected .cal-day-num { color: var(--accent); }
+.cal-event { font-size: 10px; padding: 1px 5px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.cal-event.habit { background: rgba(74,124,247,0.2); color: var(--accent); }
+.cal-event.task { background: rgba(224,82,82,0.2); color: var(--red); }
+.cal-event.gcal { background: rgba(62,201,122,0.2); color: var(--green); }
+.cal-event.more { background: var(--surface3); color: var(--text2); }
+.cal-detail { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 16px; }
+.cal-detail-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+.cal-detail-section { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin: 12px 0 6px; }
+.cal-detail-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.cal-detail-item:last-child { border-bottom: none; }
+.cal-detail-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cal-detail-done { color: var(--text3); text-decoration: line-through; }
+.cal-detail-time { font-size: 11px; color: var(--text3); margin-left: auto; }
+
+/* ── NOTES ── */
+.notes-composer { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+.notes-composer textarea { width: 100%; background: transparent; border: none; font-family: var(--font); font-size: 14px; color: var(--text); outline: none; resize: none; min-height: 80px; line-height: 1.6; }
+.notes-composer textarea::placeholder { color: var(--text3); }
+.notes-composer-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.note-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; position: relative; }
+.note-card:hover .note-del { opacity: 1; }
+.note-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.note-text { font-size: 13px; color: var(--text); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.note-time { font-size: 11px; color: var(--text3); margin-top: 8px; }
+.note-del { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; opacity: 0; transition: opacity 0.15s; }
+.note-del:hover { color: var(--red); }
+.notes-date-group { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin: 16px 0 8px; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 13px; line-height: 2; }
+
+/* ── SETTINGS ── */
+.settings-section { margin-bottom: 24px; }
+.settings-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 12px; letter-spacing: 0.04em; }
+.settings-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; overflow: hidden; }
+.settings-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--border); }
+.settings-row:last-child { border-bottom: none; }
+.settings-row-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.settings-row-body { flex: 1; }
+.settings-row-label { font-size: 13px; font-weight: 500; color: var(--text); }
+.settings-row-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.settings-row-action { margin-left: auto; }
+.settings-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--text2); font-family: var(--font); font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.settings-btn:hover { background: var(--surface2); color: var(--text); }
+.settings-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+.settings-btn.primary:hover { background: var(--accent-h); }
+.settings-btn.danger { color: var(--red); border-color: rgba(224,82,82,0.3); }
+.settings-btn.danger:hover { background: rgba(224,82,82,0.1); }
+.info-box { background: var(--accent-dim); border: 1px solid rgba(74,124,247,0.2); border-radius: 8px; padding: 12px; font-size: 12px; color: var(--text2); line-height: 1.7; margin-bottom: 12px; }
+.info-box strong { color: var(--accent); }
+.setup-input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 12px; font-family: var(--font); font-size: 13px; color: var(--text); outline: none; margin-bottom: 8px; }
+.setup-input:focus { border-color: var(--accent); }
+
+/* ── MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+@media(min-width:600px){ .modal-overlay { align-items: center; } }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border-radius: 16px 16px 0 0; border: 1px solid var(--border2); width: 100%; max-width: 480px; padding: 20px 20px calc(var(--safe-bot) + 20px); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+@media(min-width:600px){ .modal { border-radius: 16px; transform: scale(0.95); } }
+.modal-overlay.open .modal { transform: translateY(0); }
+@media(min-width:600px){ .modal-overlay.open .modal { transform: scale(1); } }
+.modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 99px; margin: 0 auto 18px; }
+@media(min-width:600px){ .modal-handle { display: none; } }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.modal-fi { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 12px; font-family: var(--font); font-size: 13px; color: var(--text); outline: none; margin-bottom: 10px; }
+.modal-fi:focus { border-color: var(--accent); }
+select.modal-fi option { background: var(--surface2); }
+input[type=date].modal-fi { color-scheme: dark; }
+.modal-btns { display: flex; gap: 8px; margin-top: 6px; }
+.modal-cancel { flex: 1; padding: 11px; border-radius: 8px; border: 1px solid var(--border2); background: transparent; color: var(--text2); font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; }
+.modal-submit { flex: 2; padding: 11px; border-radius: 8px; border: none; background: var(--accent); color: white; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; }
+.modal-submit:hover { background: var(--accent-h); }
+
+/* ── TOAST ── */
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-10px); background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 9px 18px; font-size: 13px; color: var(--text); opacity: 0; transition: all 0.25s; z-index: 999; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* MODAL */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-.modal-overlay.open { opacity: 1; pointer-events: all; }
-.modal { background: var(--surface); border-radius: 20px 20px 0 0; border: 1px solid var(--border); border-bottom: none; width: 100%; max-width: 480px; padding: 20px 20px calc(var(--safe-bottom) + 20px); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
-.modal-overlay.open .modal { transform: translateY(0); }
-.modal-handle { width: 36px; height: 4px; background: var(--muted2); border-radius: 99px; margin: 0 auto 20px; }
-.modal-title { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
-.modal-fi { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; font-family: var(--font-display); font-size: 14px; color: var(--text); outline: none; margin-bottom: 10px; }
-.modal-fi:focus { border-color: var(--accent); }
-.modal-actions { display: flex; gap: 8px; margin-top: 6px; }
-.modal-cancel { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 10px; padding: 12px; font-family: var(--font-display); font-weight: 600; font-size: 14px; cursor: pointer; }
-.modal-submit { flex: 2; background: var(--accent); border: none; color: var(--bg); border-radius: 10px; padding: 12px; font-family: var(--font-display); font-weight: 700; font-size: 14px; cursor: pointer; }
+/* ── PROGRESS BAR (top) ── */
+.progress-bar-top { height: 2px; background: var(--border); flex-shrink: 0; }
+.progress-bar-top-fill { height: 100%; background: var(--accent); transition: width 0.5s ease; }
 
-/* OAUTH SETUP */
-.setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
-.setup-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
-.setup-card p { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; font-family: var(--font-mono); }
-.setup-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-family: var(--font-mono); font-size: 12px; color: var(--text); outline: none; margin-bottom: 8px; }
-.setup-input:focus { border-color: var(--accent); }
-.setup-btn { width: 100%; background: var(--accent); border: none; color: var(--bg); border-radius: 10px; padding: 12px; font-family: var(--font-display); font-weight: 700; font-size: 14px; cursor: pointer; }
-.setup-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--muted); margin-top: 6px; }
-.divider { height: 1px; background: var(--border); margin: 20px 0; }
-.info-box { background: var(--accent-dim2); border: 1px solid rgba(200,255,110,0.15); border-radius: 10px; padding: 12px; font-size: 12px; font-family: var(--font-mono); color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
-.info-box strong { color: var(--accent); font-weight: 500; }
+/* ── RESPONSIVE ── */
+@media(max-width:700px) {
+  .sidebar { display: none; }
+  .mobile-nav { display: block; }
+  .panel { padding: 16px 16px calc(var(--safe-bot) + 70px); }
+  .main-header { padding: calc(var(--safe-top) + 14px) 16px 0; }
+  .cal-day { min-height: 52px; }
+}
 </style>
 </head>
 <body>
-
 <div class="app">
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-top">
-      <div>
-        <div class="app-title">Routine</div>
-        <div class="date-line" id="date-line"></div>
-        <div class="date-sub" id="date-sub"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="sb-brand">
+        <div class="sb-brand-icon">R</div>
+        <span class="sb-brand-name">Routine</span>
       </div>
-      <div class="header-actions">
-        <button class="icon-btn" id="reset-btn" title="Reset today" onclick="resetDay()">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        </button>
-        <button class="icon-btn" id="edit-btn" title="Edit habits" onclick="toggleEditMode()">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-        </button>
+      <button class="sb-add" onclick="openAddModal()">
+        <div class="sb-add-icon">+</div>
+        Add task
+      </button>
+    </div>
+    <div class="sb-divider"></div>
+    <nav class="sb-nav">
+      <button class="sb-item active" data-view="today" onclick="switchView('today')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Today
+        <span class="badge" id="today-badge">0</span>
+      </button>
+      <button class="sb-item" data-view="upcoming" onclick="switchView('upcoming')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Upcoming
+      </button>
+      <button class="sb-item" data-view="calendar" onclick="switchView('calendar')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Calendar
+      </button>
+      <button class="sb-item" data-view="notes" onclick="switchView('notes')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Notes
+      </button>
+    </nav>
+    <div class="sb-section">
+      <div class="sb-section-label">My Projects</div>
+      <div id="projects-list"></div>
+    </div>
+    <div class="sb-bottom">
+      <button class="sb-sync-row" onclick="switchView('settings')">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-label">Not connected</span>
+        <svg style="margin-left:auto;width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="progress-bar-top"><div class="progress-bar-top-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="main-header">
+      <div class="main-title" id="main-title">Today</div>
+      <div class="main-sub" id="main-sub"></div>
+    </div>
+
+    <!-- TODAY -->
+    <div class="panel" id="view-today" style="display:block">
+      <div id="today-content"></div>
+    </div>
+
+    <!-- UPCOMING -->
+    <div class="panel" id="view-upcoming" style="display:none">
+      <div id="upcoming-content"></div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="panel" id="view-calendar" style="display:none">
+      <div class="cal-toolbar">
+        <div class="cal-month-label" id="cal-month-label"></div>
+        <div class="cal-nav-btns">
+          <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+          <button class="cal-nav-btn" onclick="calNav(0)">Today</button>
+          <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+        </div>
       </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div id="cal-detail"></div>
     </div>
-    <div class="progress-strip">
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
-      <span class="progress-text" id="progress-text">0/0</span>
-      <span class="streak-pill" id="streak-pill">🔥 0</span>
-    </div>
-  </div>
 
-  <!-- SYNC BAR -->
-  <div class="sync-bar">
-    <div class="sync-status">
-      <div class="sync-dot" id="sync-dot"></div>
-      <span id="sync-label">Not connected</span>
-    </div>
-    <button class="sync-btn connect" id="sync-btn" onclick="handleSyncBtn()">Connect Drive</button>
-  </div>
-
-  <!-- CONTENT PANELS -->
-  <div class="content" id="panel-habits">
-    <div id="habits-list"></div>
-    <button class="add-trigger" onclick="openAddModal()">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-      Add habit
-    </button>
-  </div>
-
-  <div class="content" id="panel-notes" style="display:none">
-    <div class="note-composer">
-      <textarea class="note-input" id="note-input" placeholder="Write a note, reflection, or idea…" rows="3"></textarea>
-      <div class="note-actions">
-        <select class="note-tag-select" id="note-tag">
-          <option value="general">General</option>
-          <option value="study">Study</option>
-          <option value="personal">Personal</option>
-          <option value="idea">Idea</option>
-        </select>
-        <button class="note-save" onclick="saveNote()">Save note</button>
+    <!-- NOTES -->
+    <div class="panel" id="view-notes" style="display:none">
+      <div class="notes-composer">
+        <textarea id="note-input" placeholder="Capture a thought, reflection, or idea…" rows="3"></textarea>
+        <div class="notes-composer-footer">
+          <select class="tf-sel" id="note-tag">
+            <option value="general">General</option>
+            <option value="study">Study</option>
+            <option value="personal">Personal</option>
+            <option value="idea">Idea</option>
+          </select>
+          <button class="settings-btn primary" onclick="saveNote()">Save note</button>
+        </div>
       </div>
+      <div id="notes-list"></div>
     </div>
-    <div id="notes-list"></div>
-  </div>
 
-  <div class="content" id="panel-calendar" style="display:none">
-    <div class="cal-header">
-      <div class="cal-month" id="cal-month-label"></div>
-      <div class="cal-nav">
-        <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
-        <button class="cal-nav-btn" onclick="calNav(1)">›</button>
-      </div>
+    <!-- SETTINGS -->
+    <div class="panel" id="view-settings" style="display:none">
+      <div id="settings-content"></div>
     </div>
-    <div class="cal-grid" id="cal-grid"></div>
-    <div id="cal-day-detail"></div>
-  </div>
+  </main>
 
-  <div class="content" id="panel-sync" style="display:none">
-    <div id="sync-setup-content"></div>
-  </div>
-
-  <!-- BOTTOM NAV -->
-  <nav class="nav">
-    <button class="nav-btn active" data-panel="habits" onclick="switchPanel('habits')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-      Today
-    </button>
-    <button class="nav-btn" data-panel="notes" onclick="switchPanel('notes')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-      Notes
-    </button>
-    <button class="nav-btn" data-panel="calendar" onclick="switchPanel('calendar')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      Calendar
-    </button>
-    <button class="nav-btn" data-panel="sync" onclick="switchPanel('sync')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
-      Sync
-    </button>
+  <!-- MOBILE NAV -->
+  <nav class="mobile-nav">
+    <div class="mobile-nav-inner">
+      <button class="mnav-btn active" data-view="today" onclick="switchView('today')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Today
+      </button>
+      <button class="mnav-btn" data-view="upcoming" onclick="switchView('upcoming')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+        Upcoming
+      </button>
+      <button class="mnav-btn" data-view="calendar" onclick="switchView('calendar')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Calendar
+      </button>
+      <button class="mnav-btn" data-view="notes" onclick="switchView('notes')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Notes
+      </button>
+      <button class="mnav-btn" data-view="settings" onclick="switchView('settings')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Settings
+      </button>
+    </div>
   </nav>
 </div>
 
-<!-- ADD HABIT MODAL -->
+<!-- ADD TASK MODAL -->
 <div class="modal-overlay" id="add-modal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add habit</div>
-    <input class="modal-fi" id="new-habit-name" placeholder="Habit name" />
-    <input class="modal-fi" id="new-habit-meta" placeholder="Details (e.g. 30 min · flexible)" />
-    <select class="modal-fi" id="new-habit-time">
+    <div class="modal-title">Add task</div>
+    <input class="modal-fi" id="new-task-name" placeholder="Task name" />
+    <input class="modal-fi" id="new-task-desc" placeholder="Description (optional)" />
+    <input type="date" class="modal-fi" id="new-task-deadline" />
+    <select class="modal-fi" id="new-task-project">
+      <option value="daily">Daily</option>
+      <option value="study">Study</option>
+      <option value="career">Career</option>
+      <option value="personal">Personal</option>
+    </select>
+    <select class="modal-fi" id="new-task-priority">
+      <option value="4">No priority</option>
+      <option value="3">P3 — Medium</option>
+      <option value="2">P2 — High</option>
+      <option value="1">P1 — Urgent</option>
+    </select>
+    <select class="modal-fi" id="new-task-time">
+      <option value="flexible">Flexible</option>
       <option value="morning">Morning</option>
-      <option value="flexible" selected>Flexible</option>
       <option value="night">Night</option>
       <option value="optional">Optional</option>
     </select>
-    <div class="modal-actions">
+    <div class="modal-btns">
       <button class="modal-cancel" onclick="closeAddModal()">Cancel</button>
-      <button class="modal-submit" onclick="addHabit()">Add habit</button>
+      <button class="modal-submit" onclick="addTask()">Add task</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
 // ─── DATA ────────────────────────────────────────────────────────────
-const DEFAULT_HABITS = [
-  { id:'wake',    name:'Wake up at 6 am',         meta:'Start strong',                       time:'morning'  },
-  { id:'drive',   name:'Driving class',            meta:'Temporary — check schedule',         time:'morning'  },
-  { id:'german',  name:'Study German',             meta:'45–60 min · flexible timing',        time:'flexible' },
-  { id:'math1',   name:'Study Math (session 1)',   meta:'40 min · flexible timing',           time:'flexible' },
-  { id:'finance', name:'Financial theory',         meta:'30 min · flexible timing',           time:'flexible' },
-  { id:'dsa',     name:'Study DSA',                meta:'1–1.5 hrs · flexible timing',        time:'flexible' },
-  { id:'dsa2',    name:'Extra DSA session',        meta:'Deep dive when in flow',             time:'optional' },
-  { id:'math2',   name:'Study Math (session 2)',   meta:'40 min · flexible timing',           time:'flexible' },
-  { id:'intern',  name:'Internship hunting',       meta:'Browse listings, reach out',         time:'flexible' },
-  { id:'resume',  name:'Resume & applications',    meta:'Refine, tailor, apply',              time:'flexible' },
-  { id:'workout', name:'Workout',                  meta:'Anytime — move your body',           time:'optional' },
-  { id:'spanish', name:'Study Spanish',            meta:'15–30 min · night',                  time:'night'    },
+const DEFAULT_TASKS = [
+  { id:'wake',    name:'Wake up at 6 am',         desc:'',                                   project:'daily',    time:'morning',  priority:2, deadline:null, recurring:true },
+  { id:'drive',   name:'Driving class',            desc:'Temporary — check schedule',         project:'personal', time:'morning',  priority:3, deadline:null, recurring:true },
+  { id:'german',  name:'Study German',             desc:'45–60 min · flexible timing',        project:'study',    time:'flexible', priority:2, deadline:null, recurring:true },
+  { id:'math1',   name:'Study Math (session 1)',   desc:'40 min · flexible timing',           project:'study',    time:'flexible', priority:2, deadline:null, recurring:true },
+  { id:'finance', name:'Financial theory',         desc:'30 min · flexible timing',           project:'study',    time:'flexible', priority:2, deadline:null, recurring:true },
+  { id:'dsa',     name:'Study DSA',                desc:'1–1.5 hrs · flexible timing',        project:'study',    time:'flexible', priority:1, deadline:null, recurring:true },
+  { id:'dsa2',    name:'Extra DSA session',        desc:'Deep dive when in flow',             project:'study',    time:'optional', priority:4, deadline:null, recurring:true },
+  { id:'math2',   name:'Study Math (session 2)',   desc:'40 min · flexible timing',           project:'study',    time:'flexible', priority:2, deadline:null, recurring:true },
+  { id:'intern',  name:'Internship hunting',       desc:'Browse listings, reach out',         project:'career',   time:'flexible', priority:1, deadline:null, recurring:true },
+  { id:'resume',  name:'Resume & applications',    desc:'Refine, tailor, apply',              project:'career',   time:'flexible', priority:1, deadline:null, recurring:true },
+  { id:'workout', name:'Workout',                  desc:'Anytime — move your body',           project:'personal', time:'optional', priority:3, deadline:null, recurring:true },
+  { id:'spanish', name:'Study Spanish',            desc:'15–30 min · night',                  project:'study',    time:'night',    priority:2, deadline:null, recurring:true },
 ];
 
+const PROJECTS = {
+  daily:    { label:'Daily',    color:'#4a7cf7' },
+  study:    { label:'Study',    color:'#9b6ef7' },
+  career:   { label:'Career',   color:'#f0a732' },
+  personal: { label:'Personal', color:'#3ec97a' },
+};
+
 function todayStr() { return new Date().toISOString().slice(0,10); }
-function loadLS(k, def) { try { return JSON.parse(localStorage.getItem(k) ?? 'null') ?? def; } catch { return def; } }
-function saveLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function loadLS(k,d){ try{ return JSON.parse(localStorage.getItem(k)??'null')??d; }catch{ return d; } }
+function saveLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
 
-let habits   = loadLS('rt_habits', DEFAULT_HABITS);
-let checks   = loadLS('rt_checks', {});   // { 'YYYY-MM-DD': { id: bool } }
-let notes    = loadLS('rt_notes', []);
-let streak   = loadLS('rt_streak', { count: 0, last: '' });
-let editMode = false;
-let calDate  = new Date();
+let tasks   = loadLS('rt2_tasks', DEFAULT_TASKS);
+let checks  = loadLS('rt2_checks', {});
+let notes   = loadLS('rt2_notes', []);
+let streak  = loadLS('rt2_streak', { count:0, last:'' });
+let gdrive  = loadLS('rt2_gdrive', { token:null, fileId:null, connected:false, expiry:0 });
+let gcal    = loadLS('rt2_gcal', { events:[], lastSync:null });
+let currentView = 'today';
+let calDate = new Date();
 let selectedCalDay = todayStr();
-let gdrive   = loadLS('rt_gdrive', { token: null, fileId: null, connected: false });
 
-// ─── SAVE ALL ────────────────────────────────────────────────────────
 function persist() {
-  saveLS('rt_habits', habits);
-  saveLS('rt_checks', checks);
-  saveLS('rt_notes', notes);
-  saveLS('rt_streak', streak);
-  saveLS('rt_gdrive', gdrive);
+  saveLS('rt2_tasks', tasks);
+  saveLS('rt2_checks', checks);
+  saveLS('rt2_notes', notes);
+  saveLS('rt2_streak', streak);
+  saveLS('rt2_gdrive', gdrive);
+  saveLS('rt2_gcal', gcal);
 }
 
-// ─── HEADER ──────────────────────────────────────────────────────────
-function renderHeader() {
+// ─── VIEWS ───────────────────────────────────────────────────────────
+function switchView(v) {
+  currentView = v;
+  ['today','upcoming','calendar','notes','settings'].forEach(p => {
+    document.getElementById('view-' + p).style.display = p === v ? 'block' : 'none';
+  });
+  document.querySelectorAll('[data-view]').forEach(el => {
+    el.classList.toggle('active', el.dataset.view === v);
+  });
+  const titles = { today:'Today', upcoming:'Upcoming', calendar:'Calendar', notes:'Notes', settings:'Settings' };
+  document.getElementById('main-title').textContent = titles[v] || v;
+  if (v==='today') renderToday();
+  if (v==='upcoming') renderUpcoming();
+  if (v==='calendar') renderCalendar();
+  if (v==='notes') renderNotes();
+  if (v==='settings') renderSettings();
+  updateSub();
+}
+
+function updateSub() {
   const d = new Date();
-  document.getElementById('date-line').textContent =
-    d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
-  document.getElementById('date-sub').textContent =
-    d.toLocaleDateString('en-IN', { year:'numeric' });
+  const sub = d.toLocaleDateString('en-IN',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('main-sub').textContent = currentView==='today' ? sub : '';
+}
+
+// ─── TODAY ───────────────────────────────────────────────────────────
+function renderToday() {
+  const today = todayStr();
+  const todayChecks = checks[today] || {};
+  const recurring = tasks.filter(t => t.recurring);
+  const oneOff = tasks.filter(t => !t.recurring && t.deadline === today);
+  const overdue = tasks.filter(t => !t.recurring && t.deadline && t.deadline < today && !todayChecks[t.id]);
+  const el = document.getElementById('today-content');
+  const sections = [];
+  if (overdue.length) sections.push({ label:'Overdue', items: overdue, labelColor: 'var(--red)' });
+  sections.push({ label: 'Daily routine', items: recurring });
+  if (oneOff.length) sections.push({ label: 'Due today', items: oneOff });
+  el.innerHTML = '';
+  sections.forEach(sec => {
+    const hdr = document.createElement('div');
+    hdr.className = 'section-hdr';
+    const done = sec.items.filter(t => todayChecks[t.id]).length;
+    hdr.innerHTML = `<span class="section-hdr-label" style="color:${sec.labelColor||'var(--text2)'}">${sec.label}</span><div class="section-hdr-line"></div><span class="section-hdr-count">${done}/${sec.items.length}</span>`;
+    el.appendChild(hdr);
+    sec.items.forEach(t => el.appendChild(makeTaskRow(t, todayChecks[t.id], today)));
+  });
+  const addRow = document.createElement('div');
+  addRow.className = 'add-task-row';
+  addRow.onclick = openAddModal;
+  addRow.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Add task`;
+  el.appendChild(addRow);
   updateProgress();
+  updateTodayBadge();
+  renderProjectsSidebar();
+}
+
+function makeTaskRow(t, isDone, today) {
+  const row = document.createElement('div');
+  row.className = 'habit-row' + (isDone ? ' done' : '');
+  const deadlineHtml = t.deadline ? (() => {
+    const cls = t.deadline < today ? 'overdue' : t.deadline === today ? 'today' : 'upcoming';
+    const label = t.deadline < today ? 'Overdue' : t.deadline === today ? 'Today' : formatDate(t.deadline);
+    return `<span class="h-deadline ${cls}">${label}</span>`;
+  })() : '';
+  const proj = PROJECTS[t.project] || PROJECTS.daily;
+  row.innerHTML = `
+    <div class="priority-dot p${t.priority||4}"></div>
+    <div class="habit-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+    <div class="h-body">
+      <div class="h-name">${escHtml(t.name)}</div>
+      <div class="h-meta-row">
+        ${t.desc ? `<span class="h-meta">${escHtml(t.desc)}</span>` : ''}
+        ${deadlineHtml}
+        <span class="h-tag tag-${t.time}">${t.time}</span>
+        <span class="h-tag" style="background:${proj.color}18;color:${proj.color}">${proj.label}</span>
+      </div>
+    </div>
+    <div class="h-actions">
+      <button class="h-action-btn" onclick="deleteTask('${t.id}',event)" title="Delete">✕</button>
+    </div>
+  `;
+  row.querySelector('.habit-check').addEventListener('click', e => { e.stopPropagation(); toggleTask(t.id); });
+  row.querySelector('.h-body').addEventListener('click', () => toggleTask(t.id));
+  return row;
+}
+
+function toggleTask(id) {
+  const today = todayStr();
+  if (!checks[today]) checks[today] = {};
+  checks[today][id] = !checks[today][id];
+  persist();
+  if (currentView==='today') renderToday();
+  updateProgress();
+  scheduleDriveSync();
+}
+
+function deleteTask(id, e) {
+  e && e.stopPropagation();
+  tasks = tasks.filter(t => t.id !== id);
+  persist();
+  renderToday();
+  scheduleDriveSync();
+  showToast('Task deleted');
 }
 
 function updateProgress() {
   const today = todayStr();
   const todayChecks = checks[today] || {};
-  const required = habits.filter(h => h.time !== 'optional');
-  const done = required.filter(h => todayChecks[h.id]).length;
-  const pct = required.length ? Math.round((done / required.length) * 100) : 0;
-  document.getElementById('progress-bar').style.width = pct + '%';
-  document.getElementById('progress-text').textContent = `${done}/${required.length}`;
-  updateStreak(done === required.length && required.length > 0);
-  document.getElementById('streak-pill').textContent = `🔥 ${streak.count}`;
-}
-
-function updateStreak(allDone) {
-  const today = todayStr();
-  if (allDone && streak.last !== today) {
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-    streak.count = streak.last === yesterday ? streak.count + 1 : 1;
-    streak.last = today;
-    saveLS('rt_streak', streak);
+  const required = tasks.filter(t => t.recurring && t.time !== 'optional');
+  const done = required.filter(t => todayChecks[t.id]).length;
+  const pct = required.length ? Math.round((done/required.length)*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  if (done === required.length && required.length > 0) {
+    const s = streak.last !== today;
+    if (s) {
+      const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+      streak.count = streak.last === yesterday ? streak.count + 1 : 1;
+      streak.last = today;
+      saveLS('rt2_streak', streak);
+    }
   }
 }
 
-// ─── HABITS PANEL ────────────────────────────────────────────────────
-const SECTIONS = [
-  { key:'morning',  label:'Morning' },
-  { key:'flexible', label:'Study & work' },
-  { key:'night',    label:'Night' },
-  { key:'optional', label:'Optional' },
-];
-
-function renderHabits() {
+function updateTodayBadge() {
   const today = todayStr();
   const todayChecks = checks[today] || {};
-  const list = document.getElementById('habits-list');
-  list.innerHTML = '';
+  const remaining = tasks.filter(t => t.recurring && t.time !== 'optional' && !todayChecks[t.id]).length;
+  document.getElementById('today-badge').textContent = remaining;
+}
 
-  SECTIONS.forEach(sec => {
-    const items = habits.filter(h => h.time === sec.key);
-    if (!items.length) return;
-    const lbl = document.createElement('div');
-    lbl.className = 'section-label';
-    lbl.textContent = sec.label;
-    list.appendChild(lbl);
-    items.forEach(h => {
-      const card = document.createElement('div');
-      card.className = `habit-card ${h.time}${todayChecks[h.id] ? ' done' : ''}`;
-      card.innerHTML = `
-        <div class="check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        </div>
-        <div class="h-body">
-          <div class="h-name">${h.name}</div>
-          <div class="h-meta">${h.meta}</div>
-        </div>
-        <span class="h-tag tag-${h.time}">${sec.key === 'optional' ? 'optional' : sec.key}</span>
-        ${editMode ? `<button class="del-btn" onclick="deleteHabit('${h.id}',event)">✕</button>` : ''}
-      `;
-      if (!editMode) card.onclick = () => toggleHabit(h.id);
-      list.appendChild(card);
-    });
+// ─── UPCOMING ────────────────────────────────────────────────────────
+function renderUpcoming() {
+  const today = todayStr();
+  const upcoming = tasks.filter(t => t.deadline && t.deadline >= today)
+    .sort((a,b) => a.deadline.localeCompare(b.deadline));
+  const byDate = {};
+  upcoming.forEach(t => {
+    if (!byDate[t.deadline]) byDate[t.deadline] = [];
+    byDate[t.deadline].push(t);
+  });
+  const el = document.getElementById('upcoming-content');
+  if (!Object.keys(byDate).length) {
+    el.innerHTML = '<div class="empty-state">No upcoming tasks with deadlines.<br>Add a task with a deadline to see it here.</div>';
+    return;
+  }
+  el.innerHTML = '';
+  Object.entries(byDate).forEach(([date, items]) => {
+    const hdr = document.createElement('div');
+    hdr.className = 'section-hdr';
+    hdr.innerHTML = `<span class="section-hdr-label">${formatDate(date)}</span><div class="section-hdr-line"></div>`;
+    el.appendChild(hdr);
+    items.forEach(t => el.appendChild(makeTaskRow(t, (checks[today]||{})[t.id], today)));
   });
 }
 
-function toggleHabit(id) {
+// ─── CALENDAR ────────────────────────────────────────────────────────
+function renderCalendar() {
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  document.getElementById('cal-month-label').textContent =
+    calDate.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const grid = document.getElementById('cal-grid');
+  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  grid.innerHTML = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
   const today = todayStr();
-  if (!checks[today]) checks[today] = {};
-  checks[today][id] = !checks[today][id];
-  persist();
-  renderHabits();
-  updateProgress();
-  scheduleDriveSync();
+  const first = new Date(y,m,1).getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const prevDays = new Date(y,m,0).getDate();
+
+  function makeDay(num, dateStr, other) {
+    const el = document.createElement('div');
+    el.className = 'cal-day' + (other?' other-month':'') + (dateStr===today?' today':'') + (dateStr===selectedCalDay?' selected':'');
+    const dayChecks = checks[dateStr] || {};
+    const required = tasks.filter(t=>t.recurring && t.time!=='optional');
+    const done = required.filter(t=>dayChecks[t.id]).length;
+    const deadlines = tasks.filter(t=>t.deadline===dateStr);
+    const gcalEvents = gcal.events.filter(e=>e.date===dateStr);
+    let events = '';
+    if (done > 0) events += `<div class="cal-event habit">${done}/${required.length} done</div>`;
+    deadlines.slice(0,1).forEach(t => { events += `<div class="cal-event task">📌 ${escHtml(t.name)}</div>`; });
+    if (deadlines.length > 1) events += `<div class="cal-event more">+${deadlines.length-1} more</div>`;
+    gcalEvents.slice(0,1).forEach(e => { events += `<div class="cal-event gcal">● ${escHtml(e.title)}</div>`; });
+    el.innerHTML = `<div class="cal-day-num">${num}</div>${events}`;
+    el.onclick = () => { selectedCalDay = dateStr; renderCalendar(); };
+    return el;
+  }
+
+  for (let i=0;i<first;i++) {
+    const d = prevDays-first+1+i;
+    grid.appendChild(makeDay(d, `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`, true));
+  }
+  for (let d=1;d<=daysInMonth;d++) {
+    grid.appendChild(makeDay(d, `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, false));
+  }
+  const rem = 42-first-daysInMonth;
+  for (let d=1;d<=rem;d++) {
+    grid.appendChild(makeDay(d, `${y}-${String(m+2).padStart(2,'0')}-${String(d).padStart(2,'0')}`, true));
+  }
+  renderCalDetail();
 }
 
-function deleteHabit(id, e) {
-  e.stopPropagation();
-  habits = habits.filter(h => h.id !== id);
-  persist();
-  renderHabits();
-}
-
-function toggleEditMode() {
-  editMode = !editMode;
-  document.getElementById('edit-btn').classList.toggle('active', editMode);
-  renderHabits();
-}
-
-function resetDay() {
+function renderCalDetail() {
   const today = todayStr();
-  checks[today] = {};
-  persist();
-  renderHabits();
-  updateProgress();
-  showToast('Day reset');
+  const dayChecks = checks[selectedCalDay] || {};
+  const d = new Date(selectedCalDay + 'T12:00:00');
+  const label = d.toLocaleDateString('en-IN',{weekday:'long',month:'long',day:'numeric'});
+  const deadlines = tasks.filter(t=>t.deadline===selectedCalDay);
+  const gcalEvents = gcal.events.filter(e=>e.date===selectedCalDay);
+  const recurringItems = tasks.filter(t=>t.recurring);
+  const el = document.getElementById('cal-detail');
+  let html = `<div class="cal-detail"><div class="cal-detail-title">${label}</div>`;
+  if (gcalEvents.length) {
+    html += `<div class="cal-detail-section">Google Calendar</div>`;
+    gcalEvents.forEach(e => {
+      html += `<div class="cal-detail-item"><div class="cal-detail-dot" style="background:var(--green)"></div><span>${escHtml(e.title)}</span>${e.time?`<span class="cal-detail-time">${e.time}</span>`:''}</div>`;
+    });
+  }
+  if (deadlines.length) {
+    html += `<div class="cal-detail-section">Deadlines</div>`;
+    deadlines.forEach(t => {
+      const proj = PROJECTS[t.project]||PROJECTS.daily;
+      html += `<div class="cal-detail-item"><div class="cal-detail-dot" style="background:${proj.color}"></div><span>${escHtml(t.name)}</span><span class="cal-detail-time">${proj.label}</span></div>`;
+    });
+  }
+  html += `<div class="cal-detail-section">Routine</div>`;
+  recurringItems.forEach(t => {
+    const done = dayChecks[t.id];
+    html += `<div class="cal-detail-item"><div class="cal-detail-dot" style="background:${done?'var(--green)':'var(--border2)'}"></div><span class="${done?'cal-detail-done':''}">${escHtml(t.name)}</span></div>`;
+  });
+  html += '</div>';
+  el.innerHTML = html;
 }
 
-// ─── ADD HABIT MODAL ─────────────────────────────────────────────────
-function openAddModal() {
-  document.getElementById('add-modal').classList.add('open');
-  document.getElementById('new-habit-name').focus();
+function calNav(dir) {
+  if (dir===0) { calDate=new Date(); }
+  else calDate.setMonth(calDate.getMonth()+dir);
+  renderCalendar();
 }
-function closeAddModal() {
-  document.getElementById('add-modal').classList.remove('open');
-  document.getElementById('new-habit-name').value = '';
-  document.getElementById('new-habit-meta').value = '';
-}
-function addHabit() {
-  const name = document.getElementById('new-habit-name').value.trim();
-  if (!name) { showToast('Enter a habit name'); return; }
-  const meta = document.getElementById('new-habit-meta').value.trim();
-  const time = document.getElementById('new-habit-time').value;
-  habits.push({ id: 'h_' + Date.now(), name, meta: meta || '', time });
-  persist();
-  renderHabits();
-  closeAddModal();
-  showToast('Habit added');
-  scheduleDriveSync();
-}
-document.getElementById('add-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('add-modal')) closeAddModal();
-});
 
-// ─── NOTES PANEL ─────────────────────────────────────────────────────
+// ─── PROJECTS SIDEBAR ────────────────────────────────────────────────
+function renderProjectsSidebar() {
+  const el = document.getElementById('projects-list');
+  el.innerHTML = '';
+  Object.entries(PROJECTS).forEach(([key,proj]) => {
+    const count = tasks.filter(t=>t.project===key).length;
+    const div = document.createElement('div');
+    div.className = 'sb-project';
+    div.innerHTML = `<div class="sb-project-dot" style="background:${proj.color}"></div><span>${proj.label}</span><span class="sb-project-count">${count}</span>`;
+    el.appendChild(div);
+  });
+}
+
+// ─── NOTES ───────────────────────────────────────────────────────────
 function renderNotes() {
-  const list = document.getElementById('notes-list');
-  if (!notes.length) { list.innerHTML = '<div class="empty-state">No notes yet.<br>Write your first one above.</div>'; return; }
+  const el = document.getElementById('notes-list');
+  if (!notes.length) { el.innerHTML = '<div class="empty-state">No notes yet.<br>Write your first one above.</div>'; return; }
   const byDate = {};
   [...notes].reverse().forEach(n => {
     const d = n.ts.slice(0,10);
     if (!byDate[d]) byDate[d] = [];
     byDate[d].push(n);
   });
-  list.innerHTML = '';
-  Object.entries(byDate).forEach(([date, nts]) => {
+  const tagColors = { study:'var(--purple)', personal:'var(--green)', idea:'var(--amber)', general:'var(--text3)' };
+  el.innerHTML = '';
+  Object.entries(byDate).forEach(([date,nts]) => {
     const lbl = document.createElement('div');
-    lbl.className = 'note-date-group';
-    lbl.textContent = new Date(date + 'T12:00:00').toLocaleDateString('en-IN', { weekday:'long', month:'long', day:'numeric' });
-    list.appendChild(lbl);
+    lbl.className = 'notes-date-group';
+    lbl.textContent = new Date(date+'T12:00:00').toLocaleDateString('en-IN',{weekday:'long',month:'long',day:'numeric'});
+    el.appendChild(lbl);
     nts.forEach(n => {
       const card = document.createElement('div');
       card.className = 'note-card';
       card.innerHTML = `
-        <div class="note-tag-pill ntag-${n.tag}">${n.tag}</div>
-        <div class="note-card-text">${escHtml(n.text)}</div>
-        <div class="note-card-time">${new Date(n.ts).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' })}</div>
+        <div class="note-tag" style="color:${tagColors[n.tag]||'var(--text3)'}">${n.tag}</div>
+        <div class="note-text">${escHtml(n.text)}</div>
+        <div class="note-time">${new Date(n.ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
         <button class="note-del" onclick="deleteNote('${n.id}')">✕</button>
       `;
-      list.appendChild(card);
+      el.appendChild(card);
     });
   });
 }
 function saveNote() {
   const text = document.getElementById('note-input').value.trim();
   if (!text) return;
-  const tag = document.getElementById('note-tag').value;
-  notes.push({ id: 'n_' + Date.now(), text, tag, ts: new Date().toISOString() });
-  persist();
-  document.getElementById('note-input').value = '';
-  renderNotes();
-  showToast('Note saved');
-  scheduleDriveSync();
+  notes.push({ id:'n_'+Date.now(), text, tag: document.getElementById('note-tag').value, ts: new Date().toISOString() });
+  persist(); document.getElementById('note-input').value = '';
+  renderNotes(); showToast('Note saved'); scheduleDriveSync();
 }
-function deleteNote(id) {
-  notes = notes.filter(n => n.id !== id);
-  persist();
-  renderNotes();
-}
-function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function deleteNote(id) { notes=notes.filter(n=>n.id!==id); persist(); renderNotes(); }
 
-// ─── CALENDAR PANEL ──────────────────────────────────────────────────
-function renderCalendar() {
-  const y = calDate.getFullYear(), m = calDate.getMonth();
-  document.getElementById('cal-month-label').textContent =
-    calDate.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
-  const grid = document.getElementById('cal-grid');
-  grid.innerHTML = '<div class="cal-dow">Su</div><div class="cal-dow">Mo</div><div class="cal-dow">Tu</div><div class="cal-dow">We</div><div class="cal-dow">Th</div><div class="cal-dow">Fr</div><div class="cal-dow">Sa</div>';
-
-  const first = new Date(y, m, 1).getDay();
-  const daysInMonth = new Date(y, m+1, 0).getDate();
-  const prevDays = new Date(y, m, 0).getDate();
-  const today = todayStr();
-
-  for (let i = 0; i < first; i++) {
-    const d = prevDays - first + 1 + i;
-    const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    grid.appendChild(makeCalDay(d, dateStr, true, today));
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    grid.appendChild(makeCalDay(d, dateStr, false, today));
-  }
-  const remaining = 42 - first - daysInMonth;
-  for (let d = 1; d <= remaining; d++) {
-    const dateStr = `${y}-${String(m+2).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    grid.appendChild(makeCalDay(d, dateStr, true, today));
-  }
-  renderCalDayDetail();
-}
-
-function makeCalDay(num, dateStr, otherMonth, today) {
-  const el = document.createElement('div');
-  el.className = 'cal-day' + (otherMonth ? ' other-month' : '') + (dateStr === today ? ' today' : '') + (dateStr === selectedCalDay ? ' selected' : '');
-  const dayChecks = checks[dateStr] || {};
-  const required = habits.filter(h => h.time !== 'optional');
-  const done = required.filter(h => dayChecks[h.id]).length;
-  let dots = '';
-  if (done === required.length && done > 0) dots = '<div class="cal-dots"><div class="cal-dot dot-done"></div></div>';
-  else if (done > 0) dots = '<div class="cal-dots"><div class="cal-dot dot-partial"></div></div>';
-  el.innerHTML = `<div class="cal-day-num">${num}</div>${dots}`;
-  el.onclick = () => { selectedCalDay = dateStr; renderCalendar(); };
-  return el;
-}
-
-function renderCalDayDetail() {
-  const detail = document.getElementById('cal-day-detail');
-  const dayChecks = checks[selectedCalDay] || {};
-  const d = new Date(selectedCalDay + 'T12:00:00');
-  const label = d.toLocaleDateString('en-IN', { weekday:'long', month:'long', day:'numeric' });
-  if (!habits.length) { detail.innerHTML = ''; return; }
-  detail.innerHTML = `
-    <div class="cal-day-detail">
-      <div class="cal-day-detail-title">${label}</div>
-      ${habits.map(h => `
-        <div class="cal-habit-row">
-          <div class="cal-habit-check ${dayChecks[h.id] ? 'done' : ''}"></div>
-          <div class="cal-habit-name ${dayChecks[h.id] ? 'done' : ''}">${h.name}</div>
+// ─── SETTINGS ────────────────────────────────────────────────────────
+function renderSettings() {
+  const el = document.getElementById('settings-content');
+  el.innerHTML = `
+    <div class="settings-section">
+      <div class="settings-title">Google Drive Sync</div>
+      <div class="settings-card">
+        ${gdrive.connected ? `
+          <div class="settings-row">
+            <div class="settings-row-icon" style="background:rgba(62,201,122,0.15)">✓</div>
+            <div class="settings-row-body">
+              <div class="settings-row-label">Drive connected</div>
+              <div class="settings-row-sub">Syncs to routine-data.json in your Drive</div>
+            </div>
+            <div class="settings-row-action"><button class="settings-btn" onclick="syncNow()">Sync now</button></div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-body"><div class="settings-row-label">Disconnect</div></div>
+            <div class="settings-row-action"><button class="settings-btn danger" onclick="disconnectDrive()">Disconnect</button></div>
+          </div>
+        ` : `
+          <div class="settings-row">
+            <div class="settings-row-body">
+              <div class="settings-row-label">Connect Google Drive</div>
+              <div class="settings-row-sub">Sync across all your devices</div>
+            </div>
+          </div>
+          <div style="padding:0 16px 14px">
+            <div class="info-box">
+              <strong>1.</strong> console.cloud.google.com → create project<br>
+              <strong>2.</strong> APIs & Services → Enable Google Drive API<br>
+              <strong>3.</strong> Credentials → OAuth 2.0 Client ID → Web app<br>
+              <strong>4.</strong> JS origins: <strong>https://yourusername.github.io</strong><br>
+              <strong>5.</strong> Redirect URI: <strong>https://yourusername.github.io/routine</strong><br>
+              <strong>6.</strong> Paste Client ID below (no https://)
+            </div>
+            <input class="setup-input" id="client-id-input" placeholder="your-client-id.apps.googleusercontent.com" value="${loadLS('rt2_client_id','')||''}">
+            <button class="settings-btn primary" style="width:100%" onclick="connectDrive()">Connect Google Drive</button>
+          </div>
+        `}
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-title">Google Calendar Sync</div>
+      <div class="settings-card">
+        ${gdrive.connected ? `
+          <div class="settings-row">
+            <div class="settings-row-body">
+              <div class="settings-row-label">Sync Google Calendar</div>
+              <div class="settings-row-sub">${gcal.lastSync ? 'Last synced: ' + new Date(gcal.lastSync).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : 'Pull your events onto the calendar'}</div>
+            </div>
+            <div class="settings-row-action"><button class="settings-btn primary" onclick="syncGoogleCalendar()">Sync now</button></div>
+          </div>
+        ` : `
+          <div class="settings-row">
+            <div class="settings-row-body">
+              <div class="settings-row-label">Connect Drive first</div>
+              <div class="settings-row-sub">Calendar sync requires Drive to be connected</div>
+            </div>
+          </div>
+        `}
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-title">Data</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-row-body"><div class="settings-row-label">Export backup</div><div class="settings-row-sub">Download as JSON</div></div>
+          <div class="settings-row-action"><button class="settings-btn" onclick="exportData()">Export</button></div>
         </div>
-      `).join('')}
+        <div class="settings-row">
+          <div class="settings-row-body"><div class="settings-row-label">Import backup</div><div class="settings-row-sub">Restore from JSON</div></div>
+          <div class="settings-row-action"><button class="settings-btn" onclick="importData()">Import</button></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-body"><div class="settings-row-label">Reset today</div><div class="settings-row-sub">Clear today's check-offs</div></div>
+          <div class="settings-row-action"><button class="settings-btn danger" onclick="resetDay()">Reset</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-title">Streak</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-row-body"><div class="settings-row-label">🔥 Current streak</div></div>
+          <div class="settings-row-action" style="font-size:18px;font-weight:700;color:var(--amber)">${streak.count} days</div>
+        </div>
+      </div>
     </div>
   `;
 }
 
-function calNav(dir) {
-  calDate.setMonth(calDate.getMonth() + dir);
-  renderCalendar();
-}
-
-// ─── SYNC PANEL ──────────────────────────────────────────────────────
-function renderSyncPanel() {
-  const el = document.getElementById('sync-setup-content');
-  if (gdrive.connected && gdrive.token) {
-    el.innerHTML = `
-      <div class="setup-card">
-        <h3>✓ Google Drive connected</h3>
-        <p>Your data syncs automatically to a file called <strong>routine-data.json</strong> in your Google Drive.</p>
-        <div class="info-box">
-          <strong>How it works:</strong><br>
-          Every time you check off a habit, add a note, or make any change, the app automatically saves your data to Google Drive within 3 seconds. When you open the app on another device, it pulls the latest data from Drive.
-        </div>
-        <button class="setup-btn" onclick="syncNow()">Sync now</button>
-        <button class="setup-btn secondary" onclick="disconnectDrive()">Disconnect Drive</button>
-      </div>
-      <div class="setup-card">
-        <h3>Install on other devices</h3>
-        <p>Open this HTML file in any browser, connect the same Google account, and your data will sync automatically.</p>
-        <p style="margin-top:8px">On mobile: tap <strong>Share → Add to Home Screen</strong> to install as a native-feeling app.</p>
-      </div>
-    `;
-  } else {
-    el.innerHTML = `
-      <div class="setup-card">
-        <h3>Connect Google Drive</h3>
-        <p>To sync across devices, you need a Google OAuth Client ID. Here's how to get one in 2 minutes:</p>
-        <div class="info-box">
-          <strong>1.</strong> Go to <strong>console.cloud.google.com</strong><br>
-          <strong>2.</strong> Create a project → APIs & Services → Enable "Google Drive API"<br>
-          <strong>3.</strong> Credentials → Create OAuth 2.0 Client ID → Web Application<br>
-          <strong>4.</strong> Authorized JavaScript origins: <strong>https://yourusername.github.io</strong><br>
-          <strong>5.</strong> Authorized redirect URIs: <strong>https://yourusername.github.io/routine</strong><br>
-          <strong>6.</strong> Copy the Client ID and paste below
-        </div>
-        <input class="setup-input" id="client-id-input" placeholder="your-client-id.apps.googleusercontent.com" value="${loadLS('rt_client_id','')||''}">
-        <button class="setup-btn" onclick="connectDrive()">Connect Google Drive</button>
-      </div>
-      <div class="divider"></div>
-      <div class="setup-card">
-        <h3>No setup? Use local mode</h3>
-        <p>Your data is saved locally in this browser. Export a backup anytime.</p>
-        <button class="setup-btn secondary" onclick="exportData()">Export data as JSON</button>
-        <button class="setup-btn secondary" onclick="importData()" style="margin-top:6px">Import from JSON</button>
-      </div>
-    `;
+// ─── GOOGLE CALENDAR ─────────────────────────────────────────────────
+async function syncGoogleCalendar() {
+  if (!gdrive.token) { showToast('Connect Drive first'); return; }
+  showToast('Fetching calendar…');
+  setSyncStatus('syncing','Syncing calendar…');
+  try {
+    const now = new Date();
+    const tMin = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
+    const tMax = new Date(now.getFullYear(), now.getMonth()+3, 0).toISOString();
+    const resp = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(tMin)}&timeMax=${encodeURIComponent(tMax)}&singleEvents=true&orderBy=startTime&maxResults=200`,
+      { headers: { Authorization: `Bearer ${gdrive.token}` } }
+    );
+    if (!resp.ok) throw new Error('Calendar API error');
+    const data = await resp.json();
+    gcal.events = (data.items||[]).map(e => ({
+      id: e.id,
+      title: e.summary || 'Event',
+      date: (e.start.date || e.start.dateTime || '').slice(0,10),
+      time: e.start.dateTime ? new Date(e.start.dateTime).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : null,
+    })).filter(e=>e.date);
+    gcal.lastSync = new Date().toISOString();
+    persist();
+    setSyncStatus('synced','Calendar synced');
+    showToast(`Synced ${gcal.events.length} calendar events`);
+    if (currentView==='calendar') renderCalendar();
+    renderSettings();
+  } catch(e) {
+    setSyncStatus('error','Calendar sync failed');
+    showToast('Calendar sync failed — check Drive scope includes Calendar');
   }
 }
 
+// ─── GOOGLE DRIVE OAUTH (redirect flow) ──────────────────────────────
 function connectDrive() {
   const clientId = document.getElementById('client-id-input').value.trim();
   if (!clientId) { showToast('Enter your Client ID first'); return; }
-  saveLS('rt_client_id', clientId);
+  saveLS('rt2_client_id', clientId);
   startOAuthRedirect(clientId);
 }
 
 function startOAuthRedirect(clientId) {
   const redirectUri = location.origin + location.pathname.replace(/\/$/, '');
   const state = 'gdrive_' + Date.now();
-  saveLS('rt_oauth_state', state);
+  saveLS('rt2_oauth_state', state);
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'token',
-    scope: 'https://www.googleapis.com/auth/drive.file',
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.readonly',
     state,
     include_granted_scopes: 'true',
   });
@@ -687,22 +918,21 @@ function handleOAuthRedirect() {
   const params = new URLSearchParams(hash);
   const token = params.get('access_token');
   const state = params.get('state');
-  const savedState = loadLS('rt_oauth_state', '');
-  if (!token || !state || state !== savedState) return;
+  if (!token || !state || state !== loadLS('rt2_oauth_state','')) return;
   history.replaceState(null, '', location.pathname);
   gdrive.token = token;
   gdrive.connected = true;
-  gdrive.expiry = Date.now() + (parseInt(params.get('expires_in') || '3600') * 1000);
+  gdrive.expiry = Date.now() + (parseInt(params.get('expires_in')||'3600')*1000);
   persist();
   updateSyncUI();
-  renderSyncPanel();
-  showToast('Drive connected!');
+  showToast('Drive connected! Syncing…');
   syncToDrive();
+  setTimeout(syncGoogleCalendar, 1500);
 }
 
 function ensureToken() {
   if (!gdrive.token || (gdrive.expiry && Date.now() > gdrive.expiry - 60000)) {
-    const clientId = loadLS('rt_client_id', '');
+    const clientId = loadLS('rt2_client_id','');
     if (clientId) { showToast('Session expired, re-authenticating…'); startOAuthRedirect(clientId); }
     return false;
   }
@@ -710,14 +940,11 @@ function ensureToken() {
 }
 
 function disconnectDrive() {
-  gdrive = { token: null, fileId: null, connected: false };
-  persist();
-  updateSyncUI();
-  renderSyncPanel();
-  showToast('Disconnected');
+  gdrive = { token:null, fileId:null, connected:false, expiry:0 };
+  persist(); updateSyncUI(); renderSettings(); showToast('Disconnected');
 }
 
-// ─── GOOGLE DRIVE SYNC ───────────────────────────────────────────────
+// ─── DRIVE SYNC ──────────────────────────────────────────────────────
 let syncTimer = null;
 function scheduleDriveSync() {
   if (!gdrive.connected || !gdrive.token) return;
@@ -727,167 +954,144 @@ function scheduleDriveSync() {
 
 async function syncToDrive() {
   if (!ensureToken()) return;
-  setSyncStatus('syncing', 'Syncing…');
-  const data = JSON.stringify({ habits, checks, notes, streak, version: 1 });
+  setSyncStatus('syncing','Syncing…');
+  const data = JSON.stringify({ tasks, checks, notes, streak, gcal, version:2 });
   try {
     if (gdrive.fileId) {
       await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gdrive.fileId}?uploadType=media`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${gdrive.token}`, 'Content-Type': 'application/json' },
-        body: data
+        method:'PATCH', headers:{ Authorization:`Bearer ${gdrive.token}`, 'Content-Type':'application/json' }, body:data
       });
     } else {
-      const meta = await fetch('https://www.googleapis.com/drive/v3/files?q=name%3D%22routine-data.json%22&spaces=drive', {
-        headers: { Authorization: `Bearer ${gdrive.token}` }
-      }).then(r => r.json());
+      const meta = await fetch('https://www.googleapis.com/drive/v3/files?q=name%3D%22routine-data-v2.json%22&spaces=drive', {
+        headers:{ Authorization:`Bearer ${gdrive.token}` }
+      }).then(r=>r.json());
       if (meta.files && meta.files.length) {
         gdrive.fileId = meta.files[0].id;
         const existing = await fetch(`https://www.googleapis.com/drive/v3/files/${gdrive.fileId}?alt=media`, {
-          headers: { Authorization: `Bearer ${gdrive.token}` }
-        }).then(r => r.json()).catch(() => null);
-        if (existing && existing.version === 1) {
-          habits = existing.habits || habits;
-          checks = existing.checks || checks;
-          notes  = existing.notes || notes;
-          streak = existing.streak || streak;
-          persist();
-          renderHabits(); renderNotes(); updateProgress();
+          headers:{ Authorization:`Bearer ${gdrive.token}` }
+        }).then(r=>r.json()).catch(()=>null);
+        if (existing && existing.version===2) {
+          tasks = existing.tasks||tasks; checks=existing.checks||checks;
+          notes=existing.notes||notes; streak=existing.streak||streak;
+          gcal=existing.gcal||gcal; persist();
+          if (currentView==='today') renderToday();
+          if (currentView==='calendar') renderCalendar();
         }
         await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gdrive.fileId}?uploadType=media`, {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${gdrive.token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ habits, checks, notes, streak, version: 1 })
+          method:'PATCH', headers:{ Authorization:`Bearer ${gdrive.token}`, 'Content-Type':'application/json' },
+          body: JSON.stringify({ tasks, checks, notes, streak, gcal, version:2 })
         });
       } else {
         const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${gdrive.token}`, 'Content-Type': 'multipart/related; boundary=foo' },
-          body: `--foo\r\nContent-Type: application/json\r\n\r\n${JSON.stringify({ name:'routine-data.json', mimeType:'application/json' })}\r\n--foo\r\nContent-Type: application/json\r\n\r\n${data}\r\n--foo--`
-        }).then(r => r.json());
+          method:'POST',
+          headers:{ Authorization:`Bearer ${gdrive.token}`, 'Content-Type':'multipart/related; boundary=foo' },
+          body:`--foo\r\nContent-Type: application/json\r\n\r\n${JSON.stringify({name:'routine-data-v2.json',mimeType:'application/json'})}\r\n--foo\r\nContent-Type: application/json\r\n\r\n${data}\r\n--foo--`
+        }).then(r=>r.json());
         gdrive.fileId = res.id;
       }
     }
-    saveLS('rt_gdrive', gdrive);
-    setSyncStatus('synced', 'Synced ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }));
-  } catch(e) {
-    setSyncStatus('error', 'Sync failed');
-  }
+    saveLS('rt2_gdrive', gdrive);
+    setSyncStatus('synced','Synced '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+  } catch(e) { setSyncStatus('error','Sync failed'); }
 }
 
-async function syncNow() {
-  showToast('Syncing…');
-  await syncToDrive();
-}
+async function syncNow() { showToast('Syncing…'); await syncToDrive(); }
 
 function setSyncStatus(state, label) {
   const dot = document.getElementById('sync-dot');
-  dot.className = 'sync-dot ' + state;
+  dot.className = 'sync-dot' + (state?' '+state:'');
   document.getElementById('sync-label').textContent = label;
 }
 
 function updateSyncUI() {
-  const btn = document.getElementById('sync-btn');
-  if (gdrive.connected) {
-    setSyncStatus('synced', 'Drive connected');
-    btn.textContent = 'Sync now';
-    btn.classList.remove('connect');
-    btn.onclick = syncNow;
-  } else {
-    setSyncStatus('', 'Not connected');
-    btn.textContent = 'Connect Drive';
-    btn.classList.add('connect');
-    btn.onclick = () => switchPanel('sync');
-  }
+  if (gdrive.connected) setSyncStatus('synced','Drive connected');
+  else setSyncStatus('','Not connected');
 }
 
-function handleSyncBtn() {
-  if (gdrive.connected) syncNow();
-  else switchPanel('sync');
+// ─── ADD TASK ────────────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('new-task-deadline').value = todayStr();
+  document.getElementById('add-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('new-task-name').focus(),100);
 }
-
-// ─── EXPORT / IMPORT ─────────────────────────────────────────────────
-function exportData() {
-  const data = JSON.stringify({ habits, checks, notes, streak, version: 1 }, null, 2);
-  const a = document.createElement('a');
-  a.href = 'data:application/json,' + encodeURIComponent(data);
-  a.download = 'routine-backup-' + todayStr() + '.json';
-  a.click();
-  showToast('Exported!');
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('open');
+  document.getElementById('new-task-name').value='';
+  document.getElementById('new-task-desc').value='';
 }
-function importData() {
-  const input = document.createElement('input');
-  input.type = 'file'; input.accept = '.json';
-  input.onchange = e => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const d = JSON.parse(ev.target.result);
-        if (d.habits) habits = d.habits;
-        if (d.checks) checks = d.checks;
-        if (d.notes)  notes  = d.notes;
-        if (d.streak) streak = d.streak;
-        persist();
-        renderAll();
-        showToast('Imported!');
-      } catch { showToast('Invalid file'); }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
+function addTask() {
+  const name = document.getElementById('new-task-name').value.trim();
+  if (!name) { showToast('Enter a task name'); return; }
+  const deadline = document.getElementById('new-task-deadline').value || null;
+  const project = document.getElementById('new-task-project').value;
+  const priority = parseInt(document.getElementById('new-task-priority').value);
+  const time = document.getElementById('new-task-time').value;
+  const desc = document.getElementById('new-task-desc').value.trim();
+  tasks.push({ id:'t_'+Date.now(), name, desc, project, time, priority, deadline, recurring: !deadline });
+  persist(); closeAddModal();
+  if (currentView==='today') renderToday();
+  if (currentView==='upcoming') renderUpcoming();
+  if (currentView==='calendar') renderCalendar();
+  showToast('Task added'); scheduleDriveSync();
 }
-
-// ─── PANEL SWITCHING ─────────────────────────────────────────────────
-function switchPanel(name) {
-  ['habits','notes','calendar','sync'].forEach(p => {
-    document.getElementById('panel-' + p).style.display = p === name ? 'block' : 'none';
-  });
-  document.querySelectorAll('.nav-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.panel === name);
-  });
-  if (name === 'notes') renderNotes();
-  if (name === 'calendar') renderCalendar();
-  if (name === 'sync') renderSyncPanel();
-}
-
-// ─── TOAST ───────────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ─── RENDER ALL ──────────────────────────────────────────────────────
-function renderAll() {
-  renderHeader();
-  renderHabits();
-}
-
-// ─── INIT ────────────────────────────────────────────────────────────
-renderAll();
-updateSyncUI();
-
-// Service worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}
-
-// Auto-refresh header date at midnight
-const now = new Date();
-const msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1) - now;
-setTimeout(() => { renderAll(); setInterval(renderAll, 86400000); }, msToMidnight);
-
-// Keyboard shortcut
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('add-modal').classList.contains('open')) addHabit();
-  if (e.key === 'Escape') closeAddModal();
+document.getElementById('add-modal').addEventListener('click', e => {
+  if (e.target===document.getElementById('add-modal')) closeAddModal();
 });
 
-// Handle OAuth redirect on page load (mobile redirect flow)
+// ─── UTILS ───────────────────────────────────────────────────────────
+function formatDate(str) {
+  const d = new Date(str+'T12:00:00');
+  return d.toLocaleDateString('en-IN',{weekday:'short',month:'short',day:'numeric'});
+}
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function resetDay() {
+  checks[todayStr()]={};  persist();
+  if(currentView==='today') renderToday();
+  showToast('Day reset');
+}
+function exportData() {
+  const a=document.createElement('a');
+  a.href='data:application/json,'+encodeURIComponent(JSON.stringify({tasks,checks,notes,streak,version:2},null,2));
+  a.download='routine-backup-'+todayStr()+'.json'; a.click(); showToast('Exported!');
+}
+function importData() {
+  const input=document.createElement('input'); input.type='file'; input.accept='.json';
+  input.onchange=e=>{
+    const r=new FileReader();
+    r.onload=ev=>{ try{
+      const d=JSON.parse(ev.target.result);
+      if(d.tasks) tasks=d.tasks; if(d.checks) checks=d.checks;
+      if(d.notes) notes=d.notes; if(d.streak) streak=d.streak;
+      persist(); switchView(currentView); showToast('Imported!');
+    }catch{ showToast('Invalid file'); }};
+    r.readAsText(e.target.files[0]);
+  }; input.click();
+}
+let toastTimer;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ─── KEYBOARD ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e=>{
+  if (e.key==='Enter' && document.getElementById('add-modal').classList.contains('open')) addTask();
+  if (e.key==='Escape') closeAddModal();
+  if (e.key==='n' && !e.target.closest('input,textarea,select')) openAddModal();
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────
 handleOAuthRedirect();
+updateSyncUI();
+updateSub();
+renderToday();
+renderProjectsSidebar();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+const now2=new Date();
+setTimeout(()=>{ renderToday(); setInterval(renderToday,86400000); },
+  new Date(now2.getFullYear(),now2.getMonth(),now2.getDate()+1)-now2);
 </script>
 </body>
 </html>
