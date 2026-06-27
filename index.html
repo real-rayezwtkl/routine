@@ -152,10 +152,22 @@ input, textarea, select { font-family: var(--font); }
 .chip-deadline-soon    { background: rgba(79,126,248,0.12); color: var(--accent); }
 .chip-deadline-future  { background: var(--surface2); color: var(--text2); }
 .chip-proj { }
-.chip-time-morning  { background: rgba(240,167,50,0.1); color: var(--amber); }
-.chip-time-flexible { background: rgba(79,126,248,0.1); color: var(--accent); }
-.chip-time-night    { background: rgba(155,110,247,0.1); color: var(--purple); }
-.chip-time-optional { background: var(--surface2); color: var(--text3); }
+.chip-time { background: rgba(79,126,248,0.1); color: var(--accent); }
+.chip-time.optional { background: var(--surface2); color: var(--text3); font-style: italic; }
+/* tag multi-select in modal */
+.tag-pills-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0 4px; }
+.tag-pill-opt { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 99px; border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); font-size: 12px; cursor: pointer; transition: all 0.15s; user-select: none; }
+.tag-pill-opt.selected { border-color: currentColor; }
+.tag-pill-opt .tp-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.tag-pill-new { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 99px; border: 1px dashed var(--border2); background: transparent; color: var(--text3); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.tag-pill-new:hover { border-color: var(--accent); color: var(--accent); }
+/* time-picker row */
+.time-picker-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.time-picker-row input[type=time] { flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px; padding: 10px 12px; font-size: 13px; color: var(--text); outline: none; color-scheme: dark; }
+.time-picker-row input[type=time]:focus { border-color: var(--accent); }
+.time-picker-row input[type=time]:disabled { opacity: 0.35; cursor: not-allowed; }
+.optional-check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; color: var(--text2); font-size: 13px; cursor: pointer; }
+.optional-check-row input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
 .t-priority { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
 .p1 { background: var(--red); }
 .p2 { background: var(--amber); }
@@ -440,19 +452,22 @@ input[type=date].modal-fi { color-scheme: dark; }
     <input class="modal-fi" id="tf-name" placeholder="Task name" />
     <input class="modal-fi" id="tf-desc" placeholder="Description (optional)" />
     <input type="date" class="modal-fi" id="tf-deadline" />
-    <select class="modal-fi" id="tf-project"></select>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:4px;letter-spacing:0.04em">Tags <span style="color:var(--accent);cursor:pointer;font-size:11px;margin-left:4px" onclick="openNewTagInline()">+ new tag</span></div>
+    <div class="tag-pills-wrap" id="tf-tags-wrap"></div>
+    <input class="modal-fi" id="tf-new-tag-input" placeholder="New tag name (press Enter)" style="display:none;margin-top:6px" onkeydown="handleNewTagKey(event)" />
     <select class="modal-fi" id="tf-priority">
       <option value="4">No priority</option>
       <option value="3">P3 — Medium</option>
       <option value="2">P2 — High</option>
       <option value="1">P1 — Urgent</option>
     </select>
-    <select class="modal-fi" id="tf-time">
-      <option value="flexible">Flexible</option>
-      <option value="morning">Morning</option>
-      <option value="night">Night</option>
-      <option value="optional">Optional</option>
-    </select>
+    <label class="optional-check-row">
+      <input type="checkbox" id="tf-optional" onchange="toggleOptionalCheck()" />
+      Optional task (no fixed time)
+    </label>
+    <div class="time-picker-row">
+      <input type="time" id="tf-time" value="09:00" />
+    </div>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeTaskModal()">Cancel</button>
       <button class="modal-submit" id="task-modal-submit" onclick="submitTaskModal()">Add task</button>
@@ -501,12 +516,17 @@ input[type=date].modal-fi { color-scheme: dark; }
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────────
 const PALETTE = ['#4f7ef8','#9b6ef7','#f0a732','#34c97a','#e05252','#2ec4b6','#f06292','#ff8a65'];
-const TIME_SECTIONS = [
-  { key:'morning',  label:'Morning',   color:'#f0a732' },
-  { key:'flexible', label:'Study & Work', color:'#4f7ef8' },
-  { key:'night',    label:'Night',     color:'#9b6ef7' },
-  { key:'optional', label:'Optional',  color:'#3d5070' },
+// Tags are now multi-value; sections in Today view group by scheduled time buckets
+const TIME_BUCKETS = [
+  { key:'morning',  label:'Morning',      from:0,   to:719,  color:'#f0a732' },
+  { key:'midday',   label:'Midday',       from:720, to:1019, color:'#4f7ef8' },
+  { key:'afternoon',label:'Afternoon',    from:1020,to:1079, color:'#9b6ef7' },  // 5pm
+  { key:'evening',  label:'Evening',      from:1080,to:1259, color:'#2ec4b6' },  // 6pm-8:59pm
+  { key:'night',    label:'Night',        from:1260,to:1439, color:'#9b6ef7' },
 ];
+function timeToBucket(t){ if(!t) return 'midday'; const [h,m]=t.split(':').map(Number); const mins=h*60+(m||0); return (TIME_BUCKETS.find(b=>mins>=b.from&&mins<=b.to)||TIME_BUCKETS[1]).key; }
+function bucketColor(key){ return (TIME_BUCKETS.find(b=>b.key===key)||TIME_BUCKETS[1]).color; }
+function bucketLabel(key){ return (TIME_BUCKETS.find(b=>b.key===key)||TIME_BUCKETS[1]).label; }
 const DEFAULT_PROJECTS = [
   { id:'daily',    name:'Daily',    color:'#4f7ef8' },
   { id:'study',    name:'Study',    color:'#9b6ef7' },
@@ -514,18 +534,18 @@ const DEFAULT_PROJECTS = [
   { id:'personal', name:'Personal', color:'#34c97a' },
 ];
 const DEFAULT_TASKS = [
-  { id:'wake',    name:'Wake up at 6 am',       desc:'',                            project:'daily',    time:'morning',  priority:2, deadline:null, recurring:true },
-  { id:'drive',   name:'Driving class',          desc:'Temporary — check schedule',  project:'personal', time:'morning',  priority:3, deadline:null, recurring:true },
-  { id:'german',  name:'Study German',           desc:'45–60 min',                   project:'study',    time:'flexible', priority:2, deadline:null, recurring:true },
-  { id:'math1',   name:'Study Math (session 1)', desc:'40 min',                      project:'study',    time:'flexible', priority:2, deadline:null, recurring:true },
-  { id:'finance', name:'Financial theory',       desc:'30 min',                      project:'study',    time:'flexible', priority:2, deadline:null, recurring:true },
-  { id:'dsa',     name:'Study DSA',              desc:'1–1.5 hrs',                   project:'study',    time:'flexible', priority:1, deadline:null, recurring:true },
-  { id:'dsa2',    name:'Extra DSA session',      desc:'Optional deep dive',          project:'study',    time:'optional', priority:4, deadline:null, recurring:true },
-  { id:'math2',   name:'Study Math (session 2)', desc:'40 min',                      project:'study',    time:'flexible', priority:2, deadline:null, recurring:true },
-  { id:'intern',  name:'Internship hunting',     desc:'Browse listings, reach out',  project:'career',   time:'flexible', priority:1, deadline:null, recurring:true },
-  { id:'resume',  name:'Resume & applications',  desc:'Refine, tailor, apply',       project:'career',   time:'flexible', priority:1, deadline:null, recurring:true },
-  { id:'workout', name:'Workout',                desc:'Anytime — move your body',    project:'personal', time:'optional', priority:3, deadline:null, recurring:true },
-  { id:'spanish', name:'Study Spanish',          desc:'15–30 min',                   project:'study',    time:'night',    priority:2, deadline:null, recurring:true },
+  { id:'wake',    name:'Wake up at 6 am',       desc:'',                            tags:['daily'],              scheduledTime:'06:00', optional:false, priority:2, deadline:null, recurring:true },
+  { id:'drive',   name:'Driving class',          desc:'Temporary — check schedule',  tags:['personal'],           scheduledTime:'08:00', optional:false, priority:3, deadline:null, recurring:true },
+  { id:'german',  name:'Study German',           desc:'45–60 min',                   tags:['study'],              scheduledTime:'10:00', optional:false, priority:2, deadline:null, recurring:true },
+  { id:'math1',   name:'Study Math (session 1)', desc:'40 min',                      tags:['study'],              scheduledTime:'11:00', optional:false, priority:2, deadline:null, recurring:true },
+  { id:'finance', name:'Financial theory',       desc:'30 min',                      tags:['study'],              scheduledTime:'13:00', optional:false, priority:2, deadline:null, recurring:true },
+  { id:'dsa',     name:'Study DSA',              desc:'1–1.5 hrs',                   tags:['study'],              scheduledTime:'14:00', optional:false, priority:1, deadline:null, recurring:true },
+  { id:'dsa2',    name:'Extra DSA session',      desc:'Optional deep dive',          tags:['study'],              scheduledTime:'16:00', optional:true,  priority:4, deadline:null, recurring:true },
+  { id:'math2',   name:'Study Math (session 2)', desc:'40 min',                      tags:['study'],              scheduledTime:'17:00', optional:false, priority:2, deadline:null, recurring:true },
+  { id:'intern',  name:'Internship hunting',     desc:'Browse listings, reach out',  tags:['career'],             scheduledTime:'15:00', optional:false, priority:1, deadline:null, recurring:true },
+  { id:'resume',  name:'Resume & applications',  desc:'Refine, tailor, apply',       tags:['career'],             scheduledTime:'16:30', optional:false, priority:1, deadline:null, recurring:true },
+  { id:'workout', name:'Workout',                desc:'Anytime — move your body',    tags:['personal','health'],  scheduledTime:'12:00', optional:true,  priority:3, deadline:null, recurring:true },
+  { id:'spanish', name:'Study Spanish',          desc:'15–30 min',                   tags:['study'],              scheduledTime:'21:00', optional:false, priority:2, deadline:null, recurring:true },
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────
@@ -626,10 +646,19 @@ function renderToday(){
 
   const sections = [];
   if(overdue.length) sections.push({ label:'Overdue', items:overdue, color:'var(--red)', showStreak:false });
-  TIME_SECTIONS.forEach(sec=>{
-    const items = recurring.filter(t=>t.time===sec.key);
-    if(items.length) sections.push({ label:sec.label, items, color:sec.color, showStreak:true });
+  // Group by time bucket then sort by scheduledTime within each bucket
+  const bucketMap = {};
+  recurring.forEach(t=>{
+    const bk = t.optional ? '__optional__' : timeToBucket(t.scheduledTime);
+    if(!bucketMap[bk]) bucketMap[bk]=[];
+    bucketMap[bk].push(t);
   });
+  TIME_BUCKETS.forEach(b=>{
+    const items = (bucketMap[b.key]||[]).slice().sort((a,c)=>(a.scheduledTime||'').localeCompare(c.scheduledTime||''));
+    if(items.length) sections.push({ label:b.label, items, color:b.color, showStreak:true });
+  });
+  if(bucketMap['__optional__']&&bucketMap['__optional__'].length)
+    sections.push({ label:'Optional', items:bucketMap['__optional__'], color:'var(--text3)', showStreak:true });
   if(dueToday.length) sections.push({ label:'Due Today', items:dueToday, color:'var(--amber)', showStreak:false });
 
   sections.forEach(sec=>{
@@ -672,8 +701,8 @@ function makeRow(t, isDone, today, showStreak){
   row.className = 'task-row' + (isDone?' done':'');
   row.dataset.id = t.id;
 
-  const proj = projects.find(p=>p.id===t.project)||{name:t.project,color:'#4f7ef8'};
-  const streak = showStreak && streaks[t.id] ? streaks[t.id].count : 0;
+  const taskTags = t.tags||[];
+  const streakCount = showStreak && streaks[t.id] ? streaks[t.id].count : 0;
 
   let deadlineChip = '';
   if(t.deadline){
@@ -685,6 +714,13 @@ function makeRow(t, isDone, today, showStreak){
       deadlineChip = `<span class="t-chip ${diff<=3?'chip-deadline-soon':'chip-deadline-future'}">${lbl}</span>`;
     }
   }
+  const timeChip = t.optional
+    ? `<span class="t-chip chip-time optional">optional</span>`
+    : t.scheduledTime ? `<span class="t-chip chip-time">${t.scheduledTime}</span>` : '';
+  const tagChips = taskTags.map(tid=>{
+    const proj = projects.find(p=>p.id===tid)||{name:tid,color:'#4f7ef8'};
+    return `<span class="t-chip" style="background:${proj.color}18;color:${proj.color}">${esc(proj.name)}</span>`;
+  }).join('');
 
   row.innerHTML = `
     <div class="t-priority p${t.priority||4}"></div>
@@ -694,9 +730,9 @@ function makeRow(t, isDone, today, showStreak){
       ${t.desc?`<div class="t-desc">${esc(t.desc)}</div>`:''}
       <div class="t-chips">
         ${deadlineChip}
-        <span class="t-chip" style="background:${proj.color}18;color:${proj.color}">${proj.name}</span>
-        <span class="t-chip chip-time-${t.time}">${t.time}</span>
-        ${streak>1?`<span class="streak-badge">🔥 ${streak}d</span>`:''}
+        ${tagChips}
+        ${timeChip}
+        ${streakCount>1?`<span class="streak-badge">🔥 ${streakCount}d</span>`:''}
       </div>
     </div>
     <div class="t-actions">
@@ -736,7 +772,7 @@ function rerender(){
 function updateProgress(){
   const today = todayStr();
   const tc = checks[today]||{};
-  const required = tasks.filter(t=>t.recurring && t.time!=='optional');
+  const required = tasks.filter(t=>t.recurring && !t.optional);
   const done = required.filter(t=>tc[t.id]).length;
   const pct  = required.length ? Math.round(done/required.length*100) : 0;
   document.getElementById('main-progress-fill').style.width = pct+'%';
@@ -744,7 +780,7 @@ function updateProgress(){
 function updateBadge(){
   const today = todayStr();
   const tc = checks[today]||{};
-  const rem = tasks.filter(t=>t.recurring && t.time!=='optional' && !tc[t.id]).length;
+  const rem = tasks.filter(t=>t.recurring && !t.optional && !tc[t.id]).length;
   document.getElementById('today-badge').textContent = rem;
 }
 
@@ -754,7 +790,7 @@ function renderSidebar(){
   const projEl = document.getElementById('projects-list');
   projEl.innerHTML = '';
   projects.forEach(p=>{
-    const count = tasks.filter(t=>t.project===p.id).length;
+    const count = tasks.filter(t=>(t.tags||[]).includes(p.id)).length;
     const div = document.createElement('div');
     div.className = 'sb-project' + (currentView==='project'&&currentProject===p.id?' active':'');
     div.dataset.projid = p.id;
@@ -804,13 +840,13 @@ function renderProject(projId){
     const fav = favorites.find(f=>f.id===favId);
     if(!fav){ el.innerHTML='<div class="empty-state">Favorite not found.</div>'; return; }
     items = tasks.filter(t=>{
-      if(fav.filterProject && t.project!==fav.filterProject) return false;
+      if(fav.filterProject && !(t.tags||[]).includes(fav.filterProject)) return false;
       if(fav.filterPriority && t.priority > parseInt(fav.filterPriority)) return false;
       return true;
     });
     document.getElementById('main-title').textContent = '⭐ '+fav.name;
   } else {
-    items = tasks.filter(t=>t.project===projId);
+    items = tasks.filter(t=>(t.tags||[]).includes(projId));
     const proj = projects.find(p=>p.id===projId);
     if(proj) document.getElementById('main-title').textContent = proj.name;
   }
@@ -821,10 +857,15 @@ function renderProject(projId){
     return;
   }
 
-  // Group by time
-  TIME_SECTIONS.forEach(sec=>{
-    const secItems = items.filter(t=>t.time===sec.key);
+  // Group by time bucket
+  const bmap = {};
+  items.forEach(t=>{ const bk=t.optional?'__optional__':timeToBucket(t.scheduledTime); if(!bmap[bk]) bmap[bk]=[]; bmap[bk].push(t); });
+  const allBuckets = [...TIME_BUCKETS.map(b=>b.key), '__optional__'];
+  allBuckets.forEach(bk=>{
+    const secItems = (bmap[bk]||[]).slice().sort((a,c)=>(a.scheduledTime||'').localeCompare(c.scheduledTime||''));
     if(!secItems.length) return;
+    const color = bk==='__optional__' ? 'var(--text3)' : bucketColor(bk);
+    const label = bk==='__optional__' ? 'Optional' : bucketLabel(bk);
     const done  = secItems.filter(t=>tc[t.id]).length;
     const total = secItems.length;
     const pct   = total ? Math.round(done/total*100) : 0;
@@ -832,10 +873,10 @@ function renderProject(projId){
     block.className = 'task-section';
     block.innerHTML = `
       <div class="task-section-hdr">
-        <span class="task-section-name" style="color:${sec.color}">${sec.label}</span>
+        <span class="task-section-name" style="color:${color}">${label}</span>
         <div class="task-section-progress">
           <div class="task-section-bar-wrap">
-            <div class="task-section-bar" style="width:${pct}%;background:${sec.color}"></div>
+            <div class="task-section-bar" style="width:${pct}%;background:${color}"></div>
           </div>
         </div>
         <span class="task-section-count">${done}/${total}</span>
@@ -852,7 +893,7 @@ function renderAddRow(el, projId){
   const addRow = document.createElement('div');
   addRow.className = 'add-row';
   addRow.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Add task`;
-  addRow.onclick = ()=>{ openAddModal(); if(projId&&!projId.startsWith('__fav__')) document.getElementById('tf-project').value=projId; };
+  addRow.onclick = ()=>{ openAddModal(); if(projId&&!projId.startsWith('__fav__')){ setTimeout(()=>{ const el=document.querySelector(`.tag-pill-opt[data-tid='${projId}']`); if(el&&!el.classList.contains('selected')) el.click(); },120); } };
   el.appendChild(addRow);
 }
 
@@ -907,7 +948,7 @@ function renderCalendar(){
     const c = document.createElement('div');
     c.className = 'cal-cell'+(other?' other':'')+(ds===today?' today':'')+(ds===selectedCal?' selected':'');
     const tc    = checks[ds]||{};
-    const req   = tasks.filter(t=>t.recurring&&t.time!=='optional');
+    const req   = tasks.filter(t=>t.recurring&&!t.optional);
     const done  = req.filter(t=>tc[t.id]).length;
     const deadlines = tasks.filter(t=>t.deadline===ds);
     const gcalEvs   = gcal.events.filter(e=>e.date===ds);
@@ -940,7 +981,7 @@ function renderCalDetail(){
   }
   if(deadlines.length){
     html += `<div class="cal-detail-sec">Deadlines</div>`;
-    deadlines.forEach(t=>{ const p=projects.find(p=>p.id===t.project)||{color:'#4f7ef8',name:t.project}; html+=`<div class="cal-detail-row"><div class="cal-detail-dot" style="background:${p.color}"></div><span>${esc(t.name)}</span><span class="cal-detail-time">${p.name}</span></div>`; });
+    deadlines.forEach(t=>{ const tgs=(t.tags||[]).map(tid=>{ const p=projects.find(p=>p.id===tid); return p?p.name:tid; }).join(', '); const col=(t.tags||[]).length>0?(projects.find(p=>p.id===t.tags[0])||{color:'#4f7ef8'}).color:'#4f7ef8'; html+=`<div class="cal-detail-row"><div class="cal-detail-dot" style="background:${col}"></div><span>${esc(t.name)}</span><span class="cal-detail-time">${tgs}</span></div>`; });
   }
   html += `<div class="cal-detail-sec">Routine</div>`;
   tasks.filter(t=>t.recurring).forEach(t=>{
@@ -978,10 +1019,7 @@ function saveNote(){ const text=document.getElementById('note-input').value.trim
 function deleteNote(id){ notes=notes.filter(n=>n.id!==id); persist(); renderNotes(); }
 
 // ─── ADD / EDIT TASK MODAL ────────────────────────────────────────────
-function populateProjectSelect(selId, value){
-  const sel = document.getElementById(selId);
-  sel.innerHTML = projects.map(p=>`<option value="${p.id}" ${p.id===value?'selected':''}>${p.name}</option>`).join('');
-}
+
 function openAddModal(){
   editingTaskId = null;
   document.getElementById('task-modal-title').textContent = 'Add task';
@@ -989,9 +1027,13 @@ function openAddModal(){
   document.getElementById('tf-name').value = '';
   document.getElementById('tf-desc').value = '';
   document.getElementById('tf-deadline').value = '';
-  populateProjectSelect('tf-project', currentProject && !currentProject.startsWith('__fav__') ? currentProject : 'daily');
   document.getElementById('tf-priority').value = '4';
-  document.getElementById('tf-time').value = 'flexible';
+  document.getElementById('tf-optional').checked = false;
+  document.getElementById('tf-time').value = '09:00';
+  document.getElementById('tf-time').disabled = false;
+  toggleOptionalCheck();
+  const defaultTags = currentProject && !currentProject.startsWith('__fav__') ? [currentProject] : [];
+  renderTagPills(defaultTags);
   document.getElementById('task-modal').classList.add('open');
   setTimeout(()=>document.getElementById('tf-name').focus(),100);
 }
@@ -1004,23 +1046,109 @@ function openEditModal(id, e){
   document.getElementById('tf-name').value = t.name;
   document.getElementById('tf-desc').value = t.desc||'';
   document.getElementById('tf-deadline').value = t.deadline||'';
-  populateProjectSelect('tf-project', t.project);
   document.getElementById('tf-priority').value = String(t.priority||4);
-  document.getElementById('tf-time').value = t.time||'flexible';
+  document.getElementById('tf-optional').checked = !!t.optional;
+  document.getElementById('tf-time').value = t.scheduledTime||'09:00';
+  document.getElementById('tf-time').disabled = !!t.optional;
+  toggleOptionalCheck();
+  renderTagPills(t.tags||[]);
   document.getElementById('task-modal').classList.add('open');
   setTimeout(()=>document.getElementById('tf-name').focus(),100);
 }
+// ─── TAG PILL SYSTEM ──────────────────────────────────────────────────
+let _selectedTags = [];
+
+function renderTagPills(selected){
+  _selectedTags = selected ? [...selected] : [];
+  const wrap = document.getElementById('tf-tags-wrap');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  projects.forEach(p=>{
+    const sel = _selectedTags.includes(p.id);
+    const pill = document.createElement('div');
+    pill.className = 'tag-pill-opt' + (sel?' selected':'');
+    pill.dataset.tid = p.id;
+    pill.style.color = p.color;
+    if(sel) pill.style.borderColor = p.color;
+    pill.innerHTML = `<div class="tp-dot" style="background:${p.color}"></div>${esc(p.name)}`;
+    pill.onclick = ()=>{
+      if(_selectedTags.includes(p.id)){
+        _selectedTags = _selectedTags.filter(t=>t!==p.id);
+        pill.classList.remove('selected');
+        pill.style.borderColor = '';
+      } else {
+        _selectedTags.push(p.id);
+        pill.classList.add('selected');
+        pill.style.borderColor = p.color;
+      }
+    };
+    wrap.appendChild(pill);
+  });
+  // + new tag button
+  const newBtn = document.createElement('div');
+  newBtn.className = 'tag-pill-new';
+  newBtn.innerHTML = '+ new tag';
+  newBtn.onclick = openNewTagInline;
+  wrap.appendChild(newBtn);
+}
+
+function getSelectedTags(){ return [..._selectedTags]; }
+
+function openNewTagInline(){
+  const inp = document.getElementById('tf-new-tag-input');
+  if(!inp) return;
+  inp.style.display = 'block';
+  inp.value = '';
+  inp.focus();
+}
+
+function handleNewTagKey(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const name = e.target.value.trim();
+    if(!name) return;
+    // Check if already exists (case-insensitive)
+    const exists = projects.find(p=>p.name.toLowerCase()===name.toLowerCase());
+    if(exists){
+      if(!_selectedTags.includes(exists.id)) _selectedTags.push(exists.id);
+      renderTagPills(_selectedTags);
+      e.target.style.display='none';
+      return;
+    }
+    const color = PALETTE[projects.length % PALETTE.length];
+    const newProj = { id:'p_'+Date.now(), name, color };
+    projects.push(newProj);
+    _selectedTags.push(newProj.id);
+    persist();
+    renderTagPills(_selectedTags);
+    renderSidebar();
+    e.target.style.display='none';
+    showToast(`Tag "${name}" created`);
+  }
+  if(e.key==='Escape'){
+    e.target.style.display='none';
+  }
+}
+
+function toggleOptionalCheck(){
+  const chk = document.getElementById('tf-optional');
+  const timePicker = document.getElementById('tf-time');
+  if(chk && timePicker) timePicker.disabled = chk.checked;
+}
+
 function closeTaskModal(){ document.getElementById('task-modal').classList.remove('open'); editingTaskId=null; }
 function submitTaskModal(){
   const name = document.getElementById('tf-name').value.trim();
   if(!name){ showToast('Enter a task name'); return; }
+  const isOpt = document.getElementById('tf-optional').checked;
   const obj = {
     name,
-    desc:     document.getElementById('tf-desc').value.trim(),
-    deadline: document.getElementById('tf-deadline').value||null,
-    project:  document.getElementById('tf-project').value,
-    priority: parseInt(document.getElementById('tf-priority').value),
-    time:     document.getElementById('tf-time').value,
+    desc:          document.getElementById('tf-desc').value.trim(),
+    deadline:      document.getElementById('tf-deadline').value||null,
+    tags:          getSelectedTags(),
+    priority:      parseInt(document.getElementById('tf-priority').value),
+    scheduledTime: isOpt ? null : (document.getElementById('tf-time').value||'09:00'),
+    optional:      isOpt,
   };
   if(editingTaskId){
     const idx = tasks.findIndex(t=>t.id===editingTaskId);
@@ -1117,7 +1245,7 @@ function renderSettings(){
       <div class="settings-card">
         <div class="settings-row"><div class="settings-row-body"><div class="settings-row-label">🔥 Best streak</div></div><div class="settings-row-action" style="font-size:17px;font-weight:700;color:var(--amber)">${totalStreak} days</div></div>
         <div class="settings-row"><div class="settings-row-body"><div class="settings-row-label">📋 Total tasks</div></div><div class="settings-row-action" style="font-weight:600;color:var(--text)">${tasks.length}</div></div>
-        <div class="settings-row"><div class="settings-row-body"><div class="settings-row-label">📁 Projects</div></div><div class="settings-row-action" style="font-weight:600;color:var(--text)">${projects.length}</div></div>
+        <div class="settings-row"><div class="settings-row-body"><div class="settings-row-label">🏷️ Tags</div></div><div class="settings-row-action" style="font-weight:600;color:var(--text)">${projects.length}</div></div>
       </div>
     </div>
     <div class="settings-sec">
